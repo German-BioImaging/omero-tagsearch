@@ -5,5 +5,5 @@ from django.apps import AppConfig
 
 
 class TagsearchAppConfig(AppConfig):
-    name = "omero_webtagging_tagsearch"
-    label = "omero_webtagging_tagsearch"
+    name = "omero_tagsearch"
+    label = "omero_tagsearch"

@@ -28,7 +28,7 @@ HOMEPAGE = "https://github.com/German-BioImaging/omero-tagsearch"
 REQUIREMENTS = ["omero-web>=5.6.0"]
 
 setup(
-    name="omero-webtagging-tagsearch",
+    name="omero-tagsearch",
     packages=find_packages(exclude=["ez_setup"]),
     version=VERSION,
     description=DESCRIPTION,
