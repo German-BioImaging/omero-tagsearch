@@ -335,7 +335,7 @@ def tag_image_search(request, conn=None, **kwargs):
                 if plate_ids:
                     plates = conn.getObjects("Plate", ids=plate_ids)
                     manager["containers"]["plate"] = list(plates)
-                    
+
                 if well_ids:
                     wells = []
                     for well in  conn.getObjects("Well", ids=well_ids):
