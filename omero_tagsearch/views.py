@@ -260,7 +260,7 @@ def tag_image_search(request, conn=None, **kwargs):
             if len(exclude_ids) == 0:
                 hql = (
                     "select link.parent.id from %sAnnotationLink link "
-                    "where link.child.id in (:oids) "
+                    "where link.child.id in (:incl_ids) "
                     "group by link.parent.id "
                     "having count (distinct link.child) = %s" % (obj_type, len(include_ids))
                 )
