@@ -51,6 +51,7 @@
         $(document).ready(function()
             {
                 $("#id_selectedTags").chosen({placeholder_text:'Choose tags'});
+                $("#id_excludedTags").chosen({placeholder_text:'Choose tags to exclude'});
 
                 $(".searching_info").tooltip({
                     track: true,
@@ -126,35 +127,49 @@
                       }
                     });
 
+                    $("#id_excludedTags option").each(function() {
+                      if (($.inArray(parseInt(this.value), data.navdata) == -1) && (data.navdata.length != 0)) {
+                        $(this).hide();
+                      } else {
+                        $(this).css('display', '');
+                      }
+                    });
+
                     // Preserve the order of the select because otherwise Chosen will show the same order as
                     // the underlying select. i.e. the original option ordering
                     var selection = $('#id_selectedTags').getSelectionOrder();
+                    var selection = $('#id_excludedTags').getSelectionOrder();
 
                     // Update the chosen selector
                     $("#id_selectedTags").trigger("chosen:updated");
+                    $("#id_excludedTags").trigger("chosen:updated");
                     // Old style chosen update
                     // $("#id_selectedTags").trigger("liszt:updated");
 
                     // Restore the ordering
                     $('#id_selectedTags').setSelectionOrder(selection);
+                    $("#id_excludedTags").setSelectionOrder(selection);
 
                   }
                 });
 
+
                 // Selection change
                 $( "#id_selectedTags" ).chosen().change(function(event, params) {
 
-                  // Selection made
-                  if (params.selected) {
+                  // Selection or deselection made
+                  if (params.selected || params.deselected) {
                     // Instead of submitting, serialize the input data and load the url
                     $("#tagSearchForm").submit();
+                  }
+                });
+                $( "#id_excludedTags" ).chosen().change(function(event, params) {
 
-                  // Deselection made
-                  } else if (params.deselected) {
+                  // Selection or deselection made
+                  if (params.selected || params.deselected) {
+                    // Instead of submitting, serialize the input data and load the url
                     $("#tagSearchForm").submit();
                   }
-
-
                 });
 
                 // Preview change
@@ -208,7 +223,10 @@
                     Each time a tag is added, the list of potential tags to add is reduced to those that overlap with the tags already specified.
                     A count of results is shown in the search panel and at any time it is possible to show the Projects, Datasets and Images that match by turning on the <b>Preview<b></small>">
                     <img src="{% static 'webgateway/img/help16.png' %}" />
-                  </span>
+                  </span><br/>
+                  {{ tagnav_form.excludedTags.errors }}
+                  <label for="id_excludedTags">Selected Tags:</label>
+                  {{ tagnav_form.excludedTags }}
               </div>
 
               {{ tagnav_form.results_preview.errors }}

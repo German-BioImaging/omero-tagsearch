@@ -245,6 +245,7 @@ def tag_image_search(request, conn=None, **kwargs):
     if request.method == "POST":
 
         selected_tags = [int(x) for x in request.POST.getlist("selectedTags")]
+        excluded_tags = [int(x) for x in request.POST.getlist("excludedTags")]
         results_preview = bool(request.POST.get("results_preview"))
 
         # validate experimenter is in the active group
@@ -254,17 +255,31 @@ def tag_image_search(request, conn=None, **kwargs):
         service_opts = conn.SERVICE_OPTS.copy()
         service_opts.setOmeroGroup(active_group)
 
-        def getObjectsWithAllAnnotations(obj_type, annids):
+        def getObjectsWithAllAnnotations(obj_type, include_ids, exclude_ids):
             # Get the images that match
-            hql = (
-                "select link.parent.id from %sAnnotationLink link "
-                "where link.child.id in (:oids) "
-                "group by link.parent.id "
-                "having count (distinct link.child) = %s" % (obj_type, len(annids))
-            )
-            params = Parameters()
-            params.map = {}
-            params.map["oids"] = rlist([rlong(o) for o in set(annids)])
+            if len(exclude_ids) == 0:
+                hql = (
+                    "select link.parent.id from %sAnnotationLink link "
+                    "where link.child.id in (:oids) "
+                    "group by link.parent.id "
+                    "having count (distinct link.child) = %s" % (obj_type, len(include_ids))
+                )
+                params = Parameters()
+                params.map = {}
+                params.map["incl_ids"] = rlist([rlong(o) for o in set(include_ids)])
+            else:
+                hql = (
+                    "select link.parent.id from %sAnnotationLink link "
+                    "where link.child.id in (:incl_ids) and link.parent.id not in "
+                    "(select link.parent.id from %sAnnotationLink link "
+                    "where link.child.id in (:excl_ids))"
+                    "group by link.parent.id "
+                    "having count (distinct link.child) = %s" % (obj_type, obj_type, len(include_ids))
+                )
+                params = Parameters()
+                params.map = {}
+                params.map["incl_ids"] = rlist([rlong(o) for o in set(include_ids)])
+                params.map["excl_ids"] = rlist([rlong(o) for o in set(exclude_ids)])
 
             qs = conn.getQueryService()
             return [x[0].getValue() for x in qs.projection(hql, params, service_opts)]
@@ -283,28 +298,28 @@ def tag_image_search(request, conn=None, **kwargs):
         image_count = 0
 
         if selected_tags:
-            image_ids = getObjectsWithAllAnnotations("Image", selected_tags)
+            image_ids = getObjectsWithAllAnnotations("Image", selected_tags, excluded_tags)
             context["image_count"] = len(image_ids)
             image_count = len(image_ids)
 
-            dataset_ids = getObjectsWithAllAnnotations("Dataset", selected_tags)
+            dataset_ids = getObjectsWithAllAnnotations("Dataset", selected_tags, excluded_tags)
             context["dataset_count"] = len(dataset_ids)
             dataset_count = len(dataset_ids)
 
-            project_ids = getObjectsWithAllAnnotations("Project", selected_tags)
+            project_ids = getObjectsWithAllAnnotations("Project", selected_tags, excluded_tags)
             context["project_count"] = len(project_ids)
             project_count = len(project_ids)
 
-            screen_ids = getObjectsWithAllAnnotations("Screen", selected_tags)
+            screen_ids = getObjectsWithAllAnnotations("Screen", selected_tags, excluded_tags)
             context["screen_count"] = len(screen_ids)
             screen_count = len(screen_ids)
 
-            plate_ids = getObjectsWithAllAnnotations("Plate", selected_tags)
+            plate_ids = getObjectsWithAllAnnotations("Plate", selected_tags, excluded_tags)
             context["plate_count"] = len(plate_ids)
             plate_count = len(plate_ids)
 
             acquisition_ids = getObjectsWithAllAnnotations(
-                "PlateAcquisition", selected_tags
+                "PlateAcquisition", selected_tags, excluded_tags
             )
             context["acquisition_count"] = len(acquisition_ids)
             acquisition_count = len(acquisition_ids)
