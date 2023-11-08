@@ -11,8 +11,25 @@
     }
 
 #id_selectedTags {
-  width:150px;
+  width:200px;
 }
+
+#id_excludedTags {
+  width:200px;
+}
+
+.tagSearchDivider .field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 1px; /* Adjust as needed */
+}
+
+.tagSearchDivider label {
+    width:100px;
+    margin-right: 10px; /* Adjust as needed */
+}
+
 
 .hidden {
   display: none !important;
