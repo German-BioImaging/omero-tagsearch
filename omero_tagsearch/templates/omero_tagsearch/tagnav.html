@@ -188,6 +188,10 @@
                     }
                 });
 
+                $('#id_operation').change(function() {
+                  $("#tagSearchForm").submit();
+                });
+
 
                 $("#filtersearch label").inFieldLabels();
 
@@ -215,6 +219,7 @@
           {{ tagnav_form.non_field_errors }}
           <div class="fieldWrapper">
               <div class="tagSearchDivider">
+                  <label for="id_operation">Joining method:</label>{{ tagnav_form.operation }}<br/>
                   {{ tagnav_form.selectedTags.errors }}
                   <label for="id_selectedTags">Selected Tags:</label>
                   {{ tagnav_form.selectedTags }}
@@ -223,7 +228,7 @@
                     Each time a tag is added, the list of potential tags to add is reduced to those that overlap with the tags already specified.
                     A count of results is shown in the search panel and at any time it is possible to show the Projects, Datasets and Images that match by turning on the <b>Preview<b></small>">
                     <img src="{% static 'webgateway/img/help16.png' %}" />
-                  </span><br/>
+                  </span><br/><br/>
                   {{ tagnav_form.excludedTags.errors }}
                   <label for="id_excludedTags">Excluded Tags:</label>
                   {{ tagnav_form.excludedTags }}
