@@ -121,7 +121,7 @@
                 {% endwith %}
             {% endfor %}
             {% for c in manager.containers.project %}
-                <tr id="project-{{ c.id }}" class="{{ c.getPermsCss }}">
+                <tr id="project-{{ c.id }}" class="{{ c.getPermsCss }} project_row">
                     <td class="image">
                         <img id="{{ c.id }}" src="{% static "webgateway/img/folder16.png" %}" alt="project" title="{{ c.name }}"/>
                     </td>
@@ -135,7 +135,7 @@
                 </tr>
             {% endfor %}
             {% for c in manager.containers.screen %}
-                <tr id="screen-{{ c.id }}" class="{{ c.getPermsCss }}">
+                <tr id="screen-{{ c.id }}" class="{{ c.getPermsCss }} screen_row">
                     <td class="image">
                         <img id="{{ c.id }}" src="{% static "webclient/image/folder_screen16.png" %}" alt="screen" title="{{ c.name }}"/>
                     </td>
@@ -149,7 +149,7 @@
                 </tr>
             {% endfor %}
             {% for c in manager.containers.dataset %}
-                <tr id="dataset-{{ c.id }}" class="{{ c.getPermsCss }}">
+                <tr id="dataset-{{ c.id }}" class="{{ c.getPermsCss }} dataset_row">
                     <td class="image">
                         <img id="{{ c.id }}" src="{% static "webgateway/img/folder_image16.png" %}" alt="dataset" title="{{ c.name }}"/>
                     </td>
@@ -163,7 +163,7 @@
                 </tr>
             {% endfor %}
             {% for c in manager.containers.plate %}
-                <tr id="plate-{{ c.id }}" class="{{ c.getPermsCss }}">
+                <tr id="plate-{{ c.id }}" class="{{ c.getPermsCss }} plate_row">
                     <td class="image">
                         <img id="{{ c.id }}" src="{% static "webclient/image/folder_plate16.png" %}" alt="plate" title="{{ c.name }}"/>
                     </td>
@@ -177,7 +177,7 @@
                 </tr>
             {% endfor %}
             {% for c in manager.containers.acquisition %}
-                <tr id="acquisition-{{ c.id }}" class="{{ c.getPermsCss }}">
+                <tr id="acquisition-{{ c.id }}" class="{{ c.getPermsCss }} acquisition_row">
                     <td class="image">
                         <img id="{{ c.id }}" src="{% static "webclient/image/run16.png" %}" alt="acquisition" title="{{ c.name }}"/>
                     </td>
@@ -191,7 +191,7 @@
                 </tr>
             {% endfor %}
             {% for c in manager.containers.well %}
-                <tr id="well-{{ c.id }}" class="{{ c.getPermsCss }}">
+                <tr id="well-{{ c.id }}" class="{{ c.getPermsCss }} well_row">
                     <td class="image">
                         <img id="{{ c.id }}" src="{% static "webclient/image/well16.png" %}" alt="well" title="{{ c.name }}"/>
                     </td>
@@ -205,7 +205,7 @@
                 </tr>
             {% endfor %}
             {% for c in manager.containers.image %}
-                <tr id="image-{{ c.id }}" class="{{ c.getPermsCss }}">
+                <tr id="image-{{ c.id }}" class="{{ c.getPermsCss }} image_row">
                     <td class="image">
                         <img class="search_thumb" id="{{ c.id }}" src="{% url 'render_thumbnail_resize' 96 c.id  %}" alt="image" title="{{ c.name }}"/>
                     </td>

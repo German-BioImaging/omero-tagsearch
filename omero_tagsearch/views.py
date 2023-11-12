@@ -213,7 +213,7 @@ def index(request, conn=None, **kwargs):
     tags = list(tags)
     tags.sort(key=lambda x: x[1].lower())
 
-    form = TagSearchForm(tags, conn, initial={"results_preview": True})
+    form = TagSearchForm(tags, conn)
 
     context = {
         "init": init,

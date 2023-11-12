@@ -64,6 +64,14 @@
                     left: 5
                 });
 
+                function change_row_display(checked, rowClass) {
+                    if (checked) {
+                        $(rowClass).show();
+                    } else {
+                        $(rowClass).hide();
+                    }
+                }
+
                 // Form Submission
                 $("#tagSearchForm").ajaxForm({
                   beforeSubmit: function() {
@@ -80,14 +88,13 @@
                     $(".tagnav-acquisition span").html(data.acquisition_count);
                     $(".tagnav-well span").html(data.well_count);
                     $(".tagnav-image span").html(data.image_count);
-                      
+
                     if (data.preview) {
                       $("#filtersearch").removeClass('hidden');
                       OME.table_selection_changed();
                     } else {
                       $("#filtersearch").addClass('hidden');
                     }
-
 
                     // Hide any options that are no longer possible and
                     // show any that have become possible
@@ -109,8 +116,8 @@
 
                     // Preserve the order of the select because otherwise Chosen will show the same order as
                     // the underlying select. i.e. the original option ordering
-                    var selection = $('#id_selectedTags').getSelectionOrder();
-                    var selection = $('#id_excludedTags').getSelectionOrder();
+                    var selection_incl = $('#id_selectedTags').getSelectionOrder();
+                    var selection_excl = $('#id_excludedTags').getSelectionOrder();
 
                     // Update the chosen selector
                     $("#id_selectedTags").trigger("chosen:updated");
@@ -119,16 +126,18 @@
                     // $("#id_selectedTags").trigger("liszt:updated");
 
                     // Restore the ordering
-                    $('#id_selectedTags').setSelectionOrder(selection);
-                    $("#id_excludedTags").setSelectionOrder(selection);
+                    $('#id_selectedTags').setSelectionOrder(selection_incl);
+                    $("#id_excludedTags").setSelectionOrder(selection_excl);
 
-                  }
+                  },
                 });
 
+                $('#id_operation').change(function() {
+                  $("#tagSearchForm").submit();
+                });
 
                 // Selection change
                 $( "#id_selectedTags" ).chosen().change(function(event, params) {
-
                   // Selection or deselection made
                   if (params.selected || params.deselected) {
                     // Instead of submitting, serialize the input data and load the url
@@ -136,10 +145,8 @@
                   }
                 });
                 $( "#id_excludedTags" ).chosen().change(function(event, params) {
-
                   // Selection or deselection made
                   if (params.selected || params.deselected) {
-                    // Instead of submitting, serialize the input data and load the url
                     $("#tagSearchForm").submit();
                   }
                 });
@@ -160,15 +167,34 @@
                     }
                 });
 
-                $('#id_operation').change(function() {
-                  $("#tagSearchForm").submit();
-                });
-
+                $('#id_view_project').change(function() {change_row_display($(this).is(":checked"), ".project_row");});
+                $('#id_view_dataset').change(function() {change_row_display($(this).is(":checked"), ".dataset_row");});
+                $('#id_view_screen').change(function() {change_row_display($(this).is(":checked"), ".screen_row");});
+                $('#id_view_plate').change(function() {change_row_display($(this).is(":checked"), ".plate_row");});
+                $('#id_view_well').change(function() {change_row_display($(this).is(":checked"), ".well_row");});
+                $('#id_view_acquisition').change(function() {change_row_display($(this).is(":checked"), ".acquisition_row");});
+                $('#id_view_image').change(function() {change_row_display($(this).is(":checked"), ".image_row");});
 
                 $("#filtersearch label").inFieldLabels();
 
                 OME.table_selection_changed();     // clear selection (hides acquisition & preview tabs)
-        })
+
+
+                // The only way I found to hide rows. Called 3 times when ajax form is returned
+                var target = document.getElementById('content_details');
+                // Create an observer instance
+                var observer = new MutationObserver(function(mutations) {
+                    change_row_display($('#id_view_project').is(":checked"), ".project_row");
+                    change_row_display($('#id_view_dataset').is(":checked"), ".dataset_row");
+                    change_row_display($('#id_view_screen').is(":checked"), ".screen_row");
+                    change_row_display($('#id_view_plate').is(":checked"), ".plate_row");
+                    change_row_display($('#id_view_well').is(":checked"), ".well_row");
+                    change_row_display($('#id_view_acquisition').is(":checked"), ".acquisition_row");
+                    change_row_display($('#id_view_image').is(":checked"), ".image_row");
+                });
+                var config = { attributes: true, childList: true, subtree: true };
+                observer.observe(target, config); // Pass in the target node, as well as the observer options
+            });
     </script>
 
 {% endblock %}
@@ -216,7 +242,7 @@
                     title="Remove from the results the objects having excluded tags.">
                     <img src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
-                  </div>
+                  </div><br/><br/>
               </div>
 
               {{ tagnav_form.results_preview.errors }}
@@ -224,13 +250,13 @@
               {{ tagnav_form.results_preview }}
               <h2>Results</h2>
               <ul>
-                  <li class="tagnav-project"><div class="tagnav-icon">&nbsp;</div>Project:&nbsp;<span>0</span></li>
-                  <li class="tagnav-dataset"><div class="tagnav-icon">&nbsp;</div>Dataset:&nbsp;<span>0</span></li>
-                  <li class="tagnav-screen"><div class="tagnav-icon">&nbsp;</div>Screen:&nbsp;<span>0</span></li>
-                  <li class="tagnav-plate"><div class="tagnav-icon">&nbsp;</div>Plate:&nbsp;<span>0</span></li>
-                  <li class="tagnav-acquisition"><div class="tagnav-icon">&nbsp;</div>Plate Acquisition/Run:&nbsp;<span>0</span></li>
-                  <li class="tagnav-well"><div class="tagnav-icon">&nbsp;</div>Well:&nbsp;<span>0</span></li>
-                  <li class="tagnav-image"><div class="tagnav-icon">&nbsp;</div>Image:&nbsp;<span>0</span></li>
+                  <li class="tagnav-project">{{ tagnav_form.view_project }}<div class="tagnav-icon">&nbsp;</div>Project:&nbsp;<span>0</span></li>
+                  <li class="tagnav-dataset">{{ tagnav_form.view_dataset }}<div class="tagnav-icon">&nbsp;</div>Dataset:&nbsp;<span>0</span></li>
+                  <li class="tagnav-screen">{{ tagnav_form.view_screen }}<div class="tagnav-icon">&nbsp;</div>Screen:&nbsp;<span>0</span></li>
+                  <li class="tagnav-plate">{{ tagnav_form.view_plate }}<div class="tagnav-icon">&nbsp;</div>Plate:&nbsp;<span>0</span></li>
+                  <li class="tagnav-acquisition">{{ tagnav_form.view_acquisition }}<div class="tagnav-icon">&nbsp;</div>Plate Acquisition/Run:&nbsp;<span>0</span></li>
+                  <li class="tagnav-well">{{ tagnav_form.view_well }}<div class="tagnav-icon">&nbsp;</div>Well:&nbsp;<span>0</span></li>
+                  <li class="tagnav-image">{{ tagnav_form.view_image }}<div class="tagnav-icon">&nbsp;</div>Image:&nbsp;<span>0</span></li>
               </ul>
 
           </div>
