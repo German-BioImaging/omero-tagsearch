@@ -408,22 +408,23 @@ def tag_image_search(request, conn=None, **kwargs):
             #     WHERE link.parent.id IN (%s)
             # """ % sub_hql
 
-            if image_ids:
-                remaining.update(getAnnotationsForObjects("Image", image_ids))
-            if dataset_ids:
-                remaining.update(getAnnotationsForObjects("Dataset", dataset_ids))
-            if project_ids:
-                remaining.update(getAnnotationsForObjects("Project", project_ids))
-            if well_ids:
-                remaining.update(getAnnotationsForObjects("Well", well_ids))
-            if acquisition_ids:
-                remaining.update(
-                    getAnnotationsForObjects("PlateAcquisition", acquisition_ids)
-                )
-            if plate_ids:
-                remaining.update(getAnnotationsForObjects("Plate", plate_ids))
-            if screen_ids:
-                remaining.update(getAnnotationsForObjects("Screen", screen_ids))
+            if operation == "AND":
+                if image_ids:
+                    remaining.update(getAnnotationsForObjects("Image", image_ids))
+                if dataset_ids:
+                    remaining.update(getAnnotationsForObjects("Dataset", dataset_ids))
+                if project_ids:
+                    remaining.update(getAnnotationsForObjects("Project", project_ids))
+                if well_ids:
+                    remaining.update(getAnnotationsForObjects("Well", well_ids))
+                if acquisition_ids:
+                    remaining.update(
+                        getAnnotationsForObjects("PlateAcquisition", acquisition_ids)
+                    )
+                if plate_ids:
+                    remaining.update(getAnnotationsForObjects("Plate", plate_ids))
+                if screen_ids:
+                    remaining.update(getAnnotationsForObjects("Screen", screen_ids))
 
             end = time.time()
             logger.info(
