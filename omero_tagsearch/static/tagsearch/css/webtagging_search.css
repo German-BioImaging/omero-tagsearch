@@ -99,9 +99,13 @@
     margin-top: 10px;
   }
 
-  .search_tips__image {
-    vertical-align: middle;
-  }
+.search_tips__tag {
+  vertical-align: middle;
+}
+
+.search_tips__join {
+  vertical-align: bottom;
+}
 
 #id_view_project, #id_view_dataset, #id_view_screen, #id_view_plate,
 #id_view_well, #id_view_acquisition, #id_view_image{

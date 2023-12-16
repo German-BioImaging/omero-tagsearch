@@ -233,7 +233,7 @@
                     {{ tagnav_form.selectedTags }}&nbsp;
                     <span class="searching_info"
                     data-content="Search objects annotated with selected tags.<br>Multiple tags are combined according to the joining method.">
-                    <img class="search_tips__image" src="{% static 'webgateway/img/help16.png' %}" />
+                    <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
                   </div><br/>
                   <div class="field">
@@ -242,14 +242,14 @@
                     {{ tagnav_form.excludedTags }}&nbsp;
                     <span class="searching_info"
                     data-content="Remove from the results the objects annotated with excluded tags.">
-                    <img class="search_tips__image" src="{% static 'webgateway/img/help16.png' %}" />
+                    <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
                   </div><br/><br/>
                   <div>
                     <label for="id_operation">Joining method:</label>
                     <span class="searching_info"
                     data-content="AND: Get the objects with all selected tags.<br>OR: Get the objects with at least one selected tag.">
-                    <img class="search_tips__image" src="{% static 'webgateway/img/help16.png' %}" />
+                    <img class="search_tips__join" src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
                     {{ tagnav_form.operation }}
                   </div><br/>
