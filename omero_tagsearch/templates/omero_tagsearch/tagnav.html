@@ -50,6 +50,7 @@
     <script type="text/javascript">
         $(document).ready(function()
             {
+                var objTypes = ['project', 'dataset', 'image', 'screen', 'plate', 'acquisition', 'well']
                 $("#id_selectedTags").chosen({placeholder_text:'Choose tags'});
                 $("#id_excludedTags").chosen({placeholder_text:'Choose tags to exclude'});
 
@@ -67,8 +68,10 @@
                 function change_row_display(checked, rowClass) {
                     if (checked) {
                         $(rowClass).show();
+                        $(rowClass).removeClass('hidfromcheckbox');
                     } else {
                         $(rowClass).hide();
+                        $(rowClass).addClass('hidfromcheckbox');
                     }
                 }
 
@@ -81,20 +84,12 @@
                   success: function(data) {
                     $("div#content_details").html(data.html);
 
-                    $(".tagnav-project span").html(data.project_count);
-                    $(".tagnav-dataset span").html(data.dataset_count);
-                    $(".tagnav-screen span").html(data.screen_count);
-                    $(".tagnav-plate span").html(data.plate_count);
-                    $(".tagnav-acquisition span").html(data.acquisition_count);
-                    $(".tagnav-well span").html(data.well_count);
-                    $(".tagnav-image span").html(data.image_count);
+                    objTypes.forEach(function(objtype) {
+                      $(".tagnav-"+objtype+" span").html(data.count[objtype]);
+                    });
 
-                    if (data.preview) {
-                      $("#filtersearch").removeClass('hidden');
-                      OME.table_selection_changed();
-                    } else {
-                      $("#filtersearch").addClass('hidden');
-                    }
+                    $("#filtersearch").removeClass('hidden');
+                    OME.table_selection_changed();
 
                     // Hide any options that are no longer possible and
                     // show any that have become possible
@@ -118,17 +113,35 @@
                     // the underlying select. i.e. the original option ordering
                     var selection_incl = $('#id_selectedTags').getSelectionOrder();
                     var selection_excl = $('#id_excludedTags').getSelectionOrder();
-
                     // Update the chosen selector
                     $("#id_selectedTags").trigger("chosen:updated");
                     $("#id_excludedTags").trigger("chosen:updated");
-                    // Old style chosen update
-                    // $("#id_selectedTags").trigger("liszt:updated");
-
                     // Restore the ordering
                     $('#id_selectedTags').setSelectionOrder(selection_incl);
                     $("#id_excludedTags").setSelectionOrder(selection_excl);
 
+                    $('#id_search').quicksearch('table#dataTable tbody tr', {
+                        'delay': 0,
+                        'loader': 'span.loading',
+                        'show': function(){
+                          if (!$(this).hasClass('hidfromcheckbox')){
+                            $(this).show();
+                          }
+                        },
+                        'hide': function(){
+                          if (!$(this).hasClass('hidfromcheckbox')){
+                            $(this).hide();
+                          }
+                        }
+                    });
+
+                    objTypes.forEach(function(objtype) {
+                      change_row_display($('#id_view_'+objtype).is(":checked"), "."+objtype+"_row");
+                    });
+
+                    // Triggering the search and setting the delay
+                    $('#id_search').trigger('keyup');
+                    $('#id_search').data('quicksearch').options.delay = 300;
                   },
                 });
 
@@ -136,66 +149,27 @@
                   $("#tagSearchForm").submit();
                 });
 
-                // Selection change
                 $( "#id_selectedTags" ).chosen().change(function(event, params) {
-                  // Selection or deselection made
+                  // Tag selection or deselection made
                   if (params.selected || params.deselected) {
-                    // Instead of submitting, serialize the input data and load the url
                     $("#tagSearchForm").submit();
                   }
                 });
                 $( "#id_excludedTags" ).chosen().change(function(event, params) {
-                  // Selection or deselection made
                   if (params.selected || params.deselected) {
                     $("#tagSearchForm").submit();
                   }
                 });
 
-                // Preview change
-                $('#id_results_preview').change(function() {
-                    if($(this).is(":checked")) {
-                        // Check if there is anything to submit
-                        // Above Success should be able to handle no results though
-                        if ($("#id_selectedTags option:selected").length) {
-                          $("#tagSearchForm").submit();
-                        }
-
-                    } else {
-                        $("div#content_details").empty();
-                        $("#filtersearch").addClass('hidden');
-                        // TODO Hide filter
-                    }
+                objTypes.forEach(function(objtype) {
+                  $('#id_view_'+objtype).change(function() {change_row_display($(this).is(":checked"), "."+objtype+"_row");});
                 });
-
-                $('#id_view_project').change(function() {change_row_display($(this).is(":checked"), ".project_row");});
-                $('#id_view_dataset').change(function() {change_row_display($(this).is(":checked"), ".dataset_row");});
-                $('#id_view_screen').change(function() {change_row_display($(this).is(":checked"), ".screen_row");});
-                $('#id_view_plate').change(function() {change_row_display($(this).is(":checked"), ".plate_row");});
-                $('#id_view_well').change(function() {change_row_display($(this).is(":checked"), ".well_row");});
-                $('#id_view_acquisition').change(function() {change_row_display($(this).is(":checked"), ".acquisition_row");});
-                $('#id_view_image').change(function() {change_row_display($(this).is(":checked"), ".image_row");});
 
                 $("#filtersearch label").inFieldLabels();
 
                 OME.table_selection_changed();     // clear selection (hides acquisition & preview tabs)
 
-
-                // The only way I found to hide rows. Called 3 times when ajax form is returned
-                var target = document.getElementById('content_details');
-                // Create an observer instance
-                var observer = new MutationObserver(function(mutations) {
-                    change_row_display($('#id_view_project').is(":checked"), ".project_row");
-                    change_row_display($('#id_view_dataset').is(":checked"), ".dataset_row");
-                    change_row_display($('#id_view_screen').is(":checked"), ".screen_row");
-                    change_row_display($('#id_view_plate').is(":checked"), ".plate_row");
-                    change_row_display($('#id_view_well').is(":checked"), ".well_row");
-                    change_row_display($('#id_view_acquisition').is(":checked"), ".acquisition_row");
-                    change_row_display($('#id_view_image').is(":checked"), ".image_row");
-                });
-                var config = { attributes: true, childList: true, subtree: true };
-                observer.observe(target, config); // Pass in the target node, as well as the observer options
-
-                $(".searching_info, #daterange").tooltip({
+                $(".searching_info").tooltip({
                     track: true,
                     show: false,
                     hide: false,
@@ -204,6 +178,22 @@
                         return $(this).data('content');
                     }
                 });
+
+                $("#selectall_btn").click(function(){
+                    var do_select = $("#selectall_btn").text() === "Select all";
+                    objTypes.forEach(function(objtype) {
+                      _objclass = '#id_view_'+objtype
+                      if ($(_objclass).is(":checked") != do_select)
+                        $(_objclass).prop("checked", do_select);
+                        change_row_display($(_objclass).is(":checked"), "."+objtype+"_row");
+                    });
+
+                    if (do_select)
+                      $("#selectall_btn").text("Deselect all");
+                    else
+                      $("#selectall_btn").text("Select all");
+                });
+
             });
     </script>
 
@@ -255,11 +245,8 @@
                   </div><br/>
               </div>
 
-              {{ tagnav_form.results_preview.errors }}
-              <label for="id_results_preview">Preview:</label>
-              {{ tagnav_form.results_preview }}
               <h2>Results</h2>
-              <ul>
+              <ul id="counts_list">
                   <li class="tagnav-project">{{ tagnav_form.view_project }}<div class="tagnav-icon">&nbsp;</div>Project:&nbsp;<span>0</span></li>
                   <li class="tagnav-dataset">{{ tagnav_form.view_dataset }}<div class="tagnav-icon">&nbsp;</div>Dataset:&nbsp;<span>0</span></li>
                   <li class="tagnav-screen">{{ tagnav_form.view_screen }}<div class="tagnav-icon">&nbsp;</div>Screen:&nbsp;<span>0</span></li>
@@ -267,6 +254,7 @@
                   <li class="tagnav-acquisition">{{ tagnav_form.view_acquisition }}<div class="tagnav-icon">&nbsp;</div>Plate Acquisition/Run:&nbsp;<span>0</span></li>
                   <li class="tagnav-well">{{ tagnav_form.view_well }}<div class="tagnav-icon">&nbsp;</div>Well:&nbsp;<span>0</span></li>
                   <li class="tagnav-image">{{ tagnav_form.view_image }}<div class="tagnav-icon">&nbsp;</div>Image:&nbsp;<span>0</span></li>
+                  <li><button id="selectall_btn" type="button">Deselect all</button></li>
               </ul>
 
           </div>

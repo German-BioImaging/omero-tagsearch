@@ -115,3 +115,13 @@
 ul#id_operation li{
   display: inline-block;
 }
+
+#counts_list li,
+#counts_list ul{
+  margin-top: 2px;
+  margin-left: 0px;
+}
+#selectall_btn {
+  margin-left: 3px;
+  margin-top: 8px;
+}

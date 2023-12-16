@@ -9,7 +9,6 @@ class TagSearchForm(Form):
         choices = (("AND", "AND"), ("OR", "OR")),
         initial = "AND"
     )
-    results_preview = BooleanField(initial=True)
     view_image = BooleanField(initial=True)
     view_dataset = BooleanField(initial=True)
     view_project = BooleanField(initial=True)

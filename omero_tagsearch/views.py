@@ -213,7 +213,7 @@ def index(request, conn=None, **kwargs):
     tags = list(tags)
     tags.sort(key=lambda x: x[1].lower())
 
-    form = TagSearchForm(tags, conn)
+    form = TagSearchForm(tags, conn, use_required_attribute=False)
 
     context = {
         "init": init,
@@ -248,7 +248,6 @@ def tag_image_search(request, conn=None, **kwargs):
         selected_tags = [int(x) for x in request.POST.getlist("selectedTags")]
         excluded_tags = [int(x) for x in request.POST.getlist("excludedTags")]
         operation = request.POST.get("operation")
-        results_preview = bool(request.POST.get("results_preview"))
 
         # validate experimenter is in the active group
         active_group = (
@@ -291,83 +290,67 @@ def tag_image_search(request, conn=None, **kwargs):
         acquisition_count = 0
         well_count = 0
         image_count = 0
-
+        count_d = {}
         if selected_tags:
             image_ids = getObjectsWithAnnotations("Image", selected_tags, excluded_tags)
-            context["image_count"] = len(image_ids)
-            image_count = len(image_ids)
+            count_d["image"] = len(image_ids)
 
             dataset_ids = getObjectsWithAnnotations("Dataset", selected_tags, excluded_tags)
-            context["dataset_count"] = len(dataset_ids)
-            dataset_count = len(dataset_ids)
+            count_d["dataset"] = len(dataset_ids)
 
             project_ids = getObjectsWithAnnotations("Project", selected_tags, excluded_tags)
-            context["project_count"] = len(project_ids)
-            project_count = len(project_ids)
+            count_d["project"] = len(project_ids)
 
             screen_ids = getObjectsWithAnnotations("Screen", selected_tags, excluded_tags)
-            context["screen_count"] = len(screen_ids)
-            screen_count = len(screen_ids)
+            count_d["screen"] = len(screen_ids)
 
             plate_ids = getObjectsWithAnnotations("Plate", selected_tags, excluded_tags)
-            context["plate_count"] = len(plate_ids)
-            plate_count = len(plate_ids)
+            count_d["plate"] = len(plate_ids)
 
             well_ids = getObjectsWithAnnotations("Well", selected_tags, excluded_tags)
-            context["well_count"] = len(well_ids)
-            well_count = len(well_ids)
+            count_d["well"] = len(well_ids)
 
             acquisition_ids = getObjectsWithAnnotations(
                 "PlateAcquisition", selected_tags, excluded_tags
             )
-            context["acquisition_count"] = len(acquisition_ids)
-            acquisition_count = len(acquisition_ids)
+            count_d["acquisition"] = len(acquisition_ids)
 
-            if results_preview:
-                if image_ids:
-                    images = conn.getObjects("Image", ids=image_ids)
-                    manager["containers"]["image"] = list(images)
+            if image_ids:
+                images = conn.getObjects("Image", ids=image_ids)
+                manager["containers"]["image"] = list(images)
 
-                if dataset_ids:
-                    datasets = conn.getObjects("Dataset", ids=dataset_ids)
-                    manager["containers"]["dataset"] = list(datasets)
+            if dataset_ids:
+                datasets = conn.getObjects("Dataset", ids=dataset_ids)
+                manager["containers"]["dataset"] = list(datasets)
 
-                if project_ids:
-                    projects = conn.getObjects("Project", ids=project_ids)
-                    manager["containers"]["project"] = list(projects)
+            if project_ids:
+                projects = conn.getObjects("Project", ids=project_ids)
+                manager["containers"]["project"] = list(projects)
 
-                if screen_ids:
-                    screens = conn.getObjects("Screen", ids=screen_ids)
-                    manager["containers"]["screen"] = list(screens)
+            if screen_ids:
+                screens = conn.getObjects("Screen", ids=screen_ids)
+                manager["containers"]["screen"] = list(screens)
 
-                if plate_ids:
-                    plates = conn.getObjects("Plate", ids=plate_ids)
-                    manager["containers"]["plate"] = list(plates)
+            if plate_ids:
+                plates = conn.getObjects("Plate", ids=plate_ids)
+                manager["containers"]["plate"] = list(plates)
 
-                if well_ids:
-                    wells = []
-                    for well in  conn.getObjects("Well", ids=well_ids):
-                        well.name = well.getParent().name + f" - {well.getWellPos()}"
-                        wells.append(well)
-                    manager["containers"]["well"] = wells
+            if well_ids:
+                wells = []
+                for well in  conn.getObjects("Well", ids=well_ids):
+                    well.name = well.getParent().name + f" - {well.getWellPos()}"
+                    wells.append(well)
+                manager["containers"]["well"] = wells
 
-                if acquisition_ids:
-                    acquisitions = conn.getObjects(
-                        "PlateAcquisition", ids=acquisition_ids
-                    )
-                    manager["containers"]["acquisition"] = list(acquisitions)
-
-                manager["c_size"] = (
-                    len(image_ids)
-                    + len(dataset_ids)
-                    + len(project_ids)
-                    + len(screen_ids)
-                    + len(plate_ids)
-                    + len(well_ids)
-                    + len(acquisition_ids)
+            if acquisition_ids:
+                acquisitions = conn.getObjects(
+                    "PlateAcquisition", ids=acquisition_ids
                 )
-                if manager["c_size"] > 0:
-                    preview = True
+                manager["containers"]["acquisition"] = list(acquisitions)
+
+            manager["c_size"] = sum(count_d.values())
+            if manager["c_size"] > 0:
+                preview = True
 
             context["manager"] = manager
 
@@ -439,13 +422,7 @@ def tag_image_search(request, conn=None, **kwargs):
                 {
                     "navdata": list(remaining),
                     "preview": preview,
-                    "project_count": project_count,
-                    "dataset_count": dataset_count,
-                    "screen_count": screen_count,
-                    "plate_count": plate_count,
-                    "acquisition_count": acquisition_count,
-                    "well_count": well_count,
-                    "image_count": image_count,
+                    "count": count_d,
                     "html": html_response,
                 }
             ),
