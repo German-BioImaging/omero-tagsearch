@@ -1,10 +1,14 @@
-from django.forms import Form, MultipleChoiceField, BooleanField, ChoiceField
+from django.forms import Form, MultipleChoiceField, BooleanField, ChoiceField, RadioSelect
 
 
 class TagSearchForm(Form):
     selectedTags = MultipleChoiceField()
     excludedTags = MultipleChoiceField()
-    operation = ChoiceField()
+    operation = ChoiceField(
+        widget = RadioSelect,
+        choices = (("AND", "AND"), ("OR", "OR")),
+        initial = "AND"
+    )
     results_preview = BooleanField(initial=True)
     view_image = BooleanField(initial=True)
     view_dataset = BooleanField(initial=True)
@@ -20,5 +24,4 @@ class TagSearchForm(Form):
         # Process Tags into choices (lists of tuples)
         self.fields["selectedTags"].choices = tags
         self.fields["excludedTags"].choices = tags
-        self.fields["operation"].choices = (("AND", "AND"), ("OR", "OR"))
         self.conn = conn
