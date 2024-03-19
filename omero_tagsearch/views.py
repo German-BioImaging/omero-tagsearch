@@ -283,13 +283,6 @@ def tag_image_search(request, conn=None, **kwargs):
 
         manager = {"containers": {}}
         preview = False
-        project_count = 0
-        dataset_count = 0
-        screen_count = 0
-        plate_count = 0
-        acquisition_count = 0
-        well_count = 0
-        image_count = 0
         count_d = {}
         if selected_tags:
             image_ids = getObjectsWithAnnotations("Image", selected_tags, excluded_tags)
