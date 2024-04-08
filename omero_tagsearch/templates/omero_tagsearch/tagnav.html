@@ -144,18 +144,25 @@
                 });
 
                 $('#id_operation').change(function() {
-                  $("#tagSearchForm").submit();
+                  if ($('#enableCheckbox').is(':checked'))
+                    $("#tagSearchForm").submit();
                 });
 
                 $( "#id_selectedTags" ).chosen().change(function(event, params) {
                   // Tag selection or deselection made
-                  if (params.selected || params.deselected) {
+                  if ((params.selected || params.deselected) && $('#enableCheckbox').is(':checked')) {
                     $("#tagSearchForm").submit();
                   }
                 });
                 $( "#id_excludedTags" ).chosen().change(function(event, params) {
-                  if (params.selected || params.deselected) {
+                  if ((params.selected || params.deselected) && $('#enableCheckbox').is(':checked')) {
                     $("#tagSearchForm").submit();
+                  }
+                });
+
+                $('#enableCheckbox').change(function() {
+                  if ($(this).is(':checked')) {
+                    $('#tagSearchForm').submit();
                   }
                 });
 
@@ -221,7 +228,7 @@
                     {{ tagnav_form.selectedTags }}&nbsp;
                     <span class="searching_info"
                     data-content="Search objects annotated with selected tags.<br>Multiple tags are combined according to the joining method.">
-                    <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
+                      <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
                   </div><br/>
                   <div class="field">
@@ -230,14 +237,14 @@
                     {{ tagnav_form.excludedTags }}&nbsp;
                     <span class="searching_info"
                     data-content="Remove from the results the objects annotated with excluded tags.">
-                    <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
+                      <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
                   </div><br/><br/>
                   <div>
                     <label for="id_operation">Joining method:</label>
                     <span class="searching_info"
                     data-content="AND: Get the objects with all selected tags.<br>OR: Get the objects with at least one selected tag.">
-                    <img class="search_tips__join" src="{% static 'webgateway/img/help16.png' %}" />
+                      <img class="search_tips__join" src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
                     {{ tagnav_form.operation }}
                   </div><br/>
@@ -253,6 +260,14 @@
                   <li class="tagnav-well">{{ tagnav_form.view_well }}<div class="tagnav-icon">&nbsp;</div>Well:&nbsp;<span>0</span></li>
                   <li class="tagnav-image">{{ tagnav_form.view_image }}<div class="tagnav-icon">&nbsp;</div>Image:&nbsp;<span>0</span></li>
                   <li><button id="selectall_btn" type="button">Deselect all</button></li>
+                  <li><br/><br/>
+                      <label>
+                        <input type="checkbox" id="enableCheckbox" checked> <span>Preview</span>
+                      </label>
+                      <span class="searching_info" data-content="enable/disable the result preview and the update of the remaining tag list.">
+                        <img class="search_tips__join" src="{% static 'webgateway/img/help16.png' %}" />
+                      </span>
+                  </li>
               </ul>
 
           </div>
