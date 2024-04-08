@@ -144,8 +144,9 @@
                 });
 
                 $('#id_operation').change(function() {
-                  if ($('#enableCheckbox').is(':checked'))
+                  if ($('#enableCheckbox').is(':checked')) {
                     $("#tagSearchForm").submit();
+                  }
                 });
 
                 $( "#id_selectedTags" ).chosen().change(function(event, params) {
@@ -188,15 +189,17 @@
                     var do_select = $("#selectall_btn").text() === "Select all";
                     objTypes.forEach(function(objtype) {
                       _objclass = '#id_view_'+objtype
-                      if ($(_objclass).is(":checked") != do_select)
+                      if ($(_objclass).is(":checked") != do_select) {
                         $(_objclass).prop("checked", do_select);
                         change_row_display($(_objclass).is(":checked"), "."+objtype+"_row");
+                      }
                     });
 
-                    if (do_select)
+                    if (do_select) {
                       $("#selectall_btn").text("Deselect all");
-                    else
+                    } else {
                       $("#selectall_btn").text("Select all");
+                    }
                 });
 
             });
