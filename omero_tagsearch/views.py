@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from builtins import str
 import json
 import logging
+from collections import defaultdict
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.template.loader import render_to_string
@@ -179,7 +180,25 @@ def index(request, conn=None, **kwargs):
     service_opts = conn.SERVICE_OPTS.copy()
     service_opts.setOmeroGroup(active_group)
 
-    def get_tags(obj):
+    def get_tagsets():
+
+        # Get tagsets for tag_ids
+
+        hql = (
+            """
+            SELECT DISTINCT link.child.id, tagset.textValue
+            FROM Annotation tagset
+            JOIN tagset.annotationLinks link
+            WHERE tagset.class IS TagAnnotation
+            """
+        )
+
+        return {
+            result[0].val: f" ({result[1].val})"
+            for result in qs.projection(hql, params, service_opts)
+        }
+
+    def get_tags(obj, tagset_d):
 
         # Get tags
         # It is not sufficient to simply get the objects as there may be tags
@@ -190,28 +209,31 @@ def index(request, conn=None, **kwargs):
             SELECT DISTINCT link.child.id, link.child.textValue
             FROM %sAnnotationLink link
             WHERE link.child.class IS TagAnnotation
-            ORDER BY link.child.textValue
         """
             % obj
         )
 
         return [
-            (result[0].val, result[1].val)
+            (result[0].val, result[1].val, tagset_d[result[0].val])
             for result in qs.projection(hql, params, service_opts)
         ]
 
+    tagset_d = defaultdict(str)
+    tagset_d.update(get_tagsets())
+
     # List of tuples (id, value)
-    tags = set(get_tags("Image"))
-    tags.update(get_tags("Dataset"))
-    tags.update(get_tags("Project"))
-    tags.update(get_tags("Plate"))
-    tags.update(get_tags("PlateAcquisition"))
-    tags.update(get_tags("Screen"))
-    tags.update(get_tags("Well"))
+    tags = set(get_tags("Image", tagset_d))
+    tags.update(get_tags("Dataset", tagset_d))
+    tags.update(get_tags("Project", tagset_d))
+    tags.update(get_tags("Plate", tagset_d))
+    tags.update(get_tags("PlateAcquisition", tagset_d))
+    tags.update(get_tags("Screen", tagset_d))
+    tags.update(get_tags("Well", tagset_d))
 
     # Convert back to an ordered list and sort
     tags = list(tags)
-    tags.sort(key=lambda x: x[1].lower())
+    tags.sort(key=lambda x: (x[2].lower(), x[1].lower()))
+    tags = list(map(lambda t: (t[0], t[1] + t[2]), tags))
 
     form = TagSearchForm(tags, conn, use_required_attribute=False)
 
