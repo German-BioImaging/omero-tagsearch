@@ -183,6 +183,8 @@ def index(request, conn=None, **kwargs):
     def get_tagsets():
 
         # Get tagsets for tag_ids
+        # Do not filter tagsets on user, as it's meant to be
+        # information added to tags
 
         hql = (
             """
@@ -206,12 +208,16 @@ def index(request, conn=None, **kwargs):
         # tags = list(self.conn.getObjects("TagAnnotation"))
         hql = (
             """
-            SELECT DISTINCT link.child.id, link.child.textValue
+            SELECT DISTINCT ann.id, ann.textValue
             FROM %sAnnotationLink link
-            WHERE link.child.class IS TagAnnotation
+            JOIN link.child ann
+            WHERE ann.class IS TagAnnotation
         """
             % obj
         )
+
+        if user_id != -1:
+            hql += f" AND ann.details.owner.id = {user_id}"
 
         return [
             (result[0].val, result[1].val, tagset_d[result[0].val])
