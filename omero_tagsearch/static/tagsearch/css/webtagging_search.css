@@ -125,3 +125,11 @@ ul#id_operation li{
   margin-left: 3px;
   margin-top: 8px;
 }
+
+#id_operation {
+  display: flex;
+}
+
+#id_operation div {
+  margin-right: 10px; /* Adjust as needed */
+}
