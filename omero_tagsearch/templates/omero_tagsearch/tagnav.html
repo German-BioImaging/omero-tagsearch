@@ -230,7 +230,7 @@
                     <label for="id_selectedTags">Selected Tags:</label>
                     {{ tagnav_form.selectedTags }}&nbsp;
                     <span class="searching_info"
-                    data-content="Search objects annotated with selected tags.<br>Multiple tags are combined according to the joining method.">
+                    data-content="Search objects annotated with selected tags.</br></br>Only the tags of the selected group & user are listed.</br></br>Multiple tags are combined according to the joining method.">
                       <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
                   </div><br/>
@@ -239,14 +239,14 @@
                     <label for="id_excludedTags">Excluded Tags:</label>
                     {{ tagnav_form.excludedTags }}&nbsp;
                     <span class="searching_info"
-                    data-content="Remove from the results the objects annotated with excluded tags.">
+                    data-content="Remove from the results the objects annotated with excluded tags.</br></br>Only the tags of the selected group & user are listed.">
                       <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
                   </div><br/><br/>
                   <div>
                     <label for="id_operation">Joining method:</label>
                     <span class="searching_info"
-                    data-content="AND: Get the objects with all selected tags.<br>OR: Get the objects with at least one selected tag.">
+                    data-content="AND: Get the objects with all selected tags.</br></br>OR: Get the objects with at least one selected tag.">
                       <img class="search_tips__join" src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
                     {{ tagnav_form.operation }}
@@ -262,12 +262,16 @@
                   <li class="tagnav-acquisition">{{ tagnav_form.view_acquisition }}<div class="tagnav-icon">&nbsp;</div>Run:&nbsp;<span>0</span></li>
                   <li class="tagnav-well">{{ tagnav_form.view_well }}<div class="tagnav-icon">&nbsp;</div>Well:&nbsp;<span>0</span></li>
                   <li class="tagnav-image">{{ tagnav_form.view_image }}<div class="tagnav-icon">&nbsp;</div>Image:&nbsp;<span>0</span></li>
-                  <li><button id="selectall_btn" type="button">Deselect all</button></li>
+                  <li><button id="selectall_btn" type="button">Deselect all</button>&nbsp
+                     <span class="searching_info" data-content="Deselect object types to filter them out of the result view. This has no effect on the query sent to the server.">
+                       <img class="search_tips__join" src="{% static 'webgateway/img/help16.png' %}" />
+                     </span>
+                  </li>
                   <li><br/><br/>
                       <label>
                         <input type="checkbox" id="enableCheckbox" checked> <span>Preview</span>
                       </label>
-                      <span class="searching_info" data-content="enable/disable the result preview and the update of the remaining tag list.">
+                      <span class="searching_info" data-content="Prevent queries from being sent to the server, thereby disabling the updating of the tag selection fields and results.">
                         <img class="search_tips__join" src="{% static 'webgateway/img/help16.png' %}" />
                       </span>
                   </li>
