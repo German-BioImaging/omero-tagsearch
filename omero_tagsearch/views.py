@@ -195,7 +195,7 @@ def index(request, conn=None, **kwargs):
         )
 
         return {
-            result[0].val: f" ({result[1].val})"
+            result[0].val: f" [{result[1].val}]"
             for result in qs.projection(hql, params, service_opts)
         }
 
