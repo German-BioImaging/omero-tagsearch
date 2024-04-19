@@ -175,17 +175,16 @@ def index(request, conn=None, **kwargs):
 
     # Create and set the form
 
-    params = Parameters()
     qs = conn.getQueryService()
     service_opts = conn.SERVICE_OPTS.copy()
     service_opts.setOmeroGroup(active_group)
 
     def get_tagsets():
-
         # Get tagsets for tag_ids
         # Do not filter tagsets on user, as it's meant to be
         # information added to tags
 
+        params = Parameters()
         hql = (
             """
             SELECT DISTINCT link.child.id, tagset.textValue
@@ -201,11 +200,12 @@ def index(request, conn=None, **kwargs):
         }
 
     def get_tags(obj, tagset_d):
-
         # Get tags
         # It is not sufficient to simply get the objects as there may be tags
         # which are not applied which don't really make sense to display
         # tags = list(self.conn.getObjects("TagAnnotation"))
+
+        params = Parameters()
         hql = (
             """
             SELECT DISTINCT ann.id, ann.textValue
@@ -217,7 +217,8 @@ def index(request, conn=None, **kwargs):
         )
 
         if user_id != -1:
-            hql += f" AND ann.details.owner.id = {user_id}"
+            hql += f" AND ann.details.owner.id = (:uid)"
+            params.map = {"uid": rlong(user_id)}
 
         return [
             (result[0].val, result[1].val, tagset_d[result[0].val])
