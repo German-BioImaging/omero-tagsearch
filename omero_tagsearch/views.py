@@ -173,6 +173,11 @@ def index(request, conn=None, **kwargs):
     myGroups.sort(key=lambda x: x.getName().lower())
     new_container_form = ContainerForm()
 
+    fullname_d = {exp.getId(): exp for exp in leaders + members}
+    user_name = ""
+    if user_id != -1:
+        user_name = fullname_d[user_id].getFullName()
+
     # Create and set the form
 
     qs = conn.getQueryService()
@@ -260,6 +265,7 @@ def index(request, conn=None, **kwargs):
     context["current_url"] = url
     context["template"] = template
     context["tagnav_form"] = form
+    context["user_name"] = user_name
 
     return context
 

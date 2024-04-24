@@ -59,6 +59,10 @@
   padding: 0;
 }
 
+.tagnav-user .tagnav-icon {
+  background: url('../image/icon_user.png') no-repeat;
+}
+
 .tagnav-project .tagnav-icon {
   background: url('../image/folder16.png') no-repeat;
 }
@@ -89,7 +93,7 @@
 
 .tagnav-project, .tagnav-dataset, .tagnav-screen,
 .tagnav-plate, .tagnav-acquisition, .tagnav-well,
-.tagnav-image {
+.tagnav-image, .tagnav-user {
     color: hsl(210,10%,50%);
     font-size: 1.2em;
     text-shadow: 0 1px 0 white;
@@ -113,6 +117,12 @@
 }
 
 ul#id_operation li{
+  display: inline-block;
+}
+
+#id_userName {
+  margin-top: 5px;
+  margin-bottom: 5px;
   display: inline-block;
 }
 
