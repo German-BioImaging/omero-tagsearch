@@ -49,10 +49,6 @@
     <script type="text/javascript">
         $(document).ready(function()
             {
-                if ($("#id_userName span").text() === "") {
-                  // hide the user icon if user set to 'All members'
-                  $("#id_userName").remove();
-                }
 
                 var objTypes = ['project', 'dataset', 'image', 'screen', 'plate', 'acquisition', 'well']
                 $("#id_selectedTags").chosen({placeholder_text:'Choose tags'});
@@ -230,10 +226,12 @@
           {# {{ tagnav_form.as_p }} #}
           {{ tagnav_form.non_field_errors }}
 
-          <div id="id_userName" class="tagnav-user">
-            <div class="tagnav-icon">&nbsp;</div>
-            &nbsp;<span>{{ user_name }}</span>
-          </div>
+          {% if user_name %}
+            <div id="id_userName" class="tagnav-user">
+              <div class="tagnav-icon">&nbsp;</div>
+              &nbsp;<span>{{ user_name }}</span>
+            </div>
+          {% endif %}
 
           <div class="fieldWrapper">
                 <div class="tagSearchDivider">
