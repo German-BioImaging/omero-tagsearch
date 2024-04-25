@@ -1,3 +1,10 @@
+.. image:: https://github.com/German-BioImaging/omero-tagsearch/workflows/PyPI/badge.svg
+   :target: https://github.com/German-BioImaging/omero-tagsearch/actions
+
+.. image:: https://badge.fury.io/py/omero-tagsearch.svg
+    :target: https://badge.fury.io/py/omero-tagsearch
+
+
 OMERO.tagsearch
 ===============
 OMERO.tagsearch is a plugin for `OMERO.web <https://github.com/ome/omero-web>`_ that enables searching of data using tags, with the search continuously refined as available search terms are entered and further term suggestions based on the entered terms are offered. 
