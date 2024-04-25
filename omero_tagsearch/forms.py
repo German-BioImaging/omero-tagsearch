@@ -1,13 +1,14 @@
-from django.forms import Form, MultipleChoiceField, BooleanField, ChoiceField, RadioSelect
+from django.forms import Form, MultipleChoiceField, BooleanField
+from django.forms import ChoiceField, RadioSelect
 
 
 class TagSearchForm(Form):
     selectedTags = MultipleChoiceField()
     excludedTags = MultipleChoiceField()
     operation = ChoiceField(
-        widget = RadioSelect,
-        choices = (("AND", "AND"), ("OR", "OR")),
-        initial = "AND"
+        widget=RadioSelect,
+        choices=(("AND", "AND"), ("OR", "OR")),
+        initial="AND"
     )
     view_image = BooleanField(initial=True)
     view_dataset = BooleanField(initial=True)
