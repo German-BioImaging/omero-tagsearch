@@ -11,8 +11,25 @@
     }
 
 #id_selectedTags {
-  width:150px;
+  width:200px;
 }
+
+#id_excludedTags {
+  width:200px;
+}
+
+.tagSearchDivider .field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 1px; /* Adjust as needed */
+}
+
+.tagSearchDivider label {
+    width:100px;
+    margin-right: 10px; /* Adjust as needed */
+}
+
 
 .hidden {
   display: none !important;
@@ -40,6 +57,10 @@
   text-decoration: none;
   margin: 0 0 3px 0;
   padding: 0;
+}
+
+.tagnav-user .tagnav-icon {
+  background: url('../image/icon_user.png') no-repeat;
 }
 
 .tagnav-project .tagnav-icon {
@@ -72,7 +93,7 @@
 
 .tagnav-project, .tagnav-dataset, .tagnav-screen,
 .tagnav-plate, .tagnav-acquisition, .tagnav-well,
-.tagnav-image {
+.tagnav-image, .tagnav-user {
     color: hsl(210,10%,50%);
     font-size: 1.2em;
     text-shadow: 0 1px 0 white;
@@ -81,3 +102,44 @@
     margin-left: 5px;
     margin-top: 10px;
   }
+
+.search_tips__tag {
+  vertical-align: middle;
+}
+
+.search_tips__join {
+  vertical-align: bottom;
+}
+
+#id_view_project, #id_view_dataset, #id_view_screen, #id_view_plate,
+#id_view_well, #id_view_acquisition, #id_view_image{
+  vertical-align: bottom;
+}
+
+ul#id_operation li{
+  display: inline-block;
+}
+
+#id_userName {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  display: inline-block;
+}
+
+#counts_list li,
+#counts_list ul{
+  margin-top: 2px;
+  margin-left: 0px;
+}
+#selectall_btn {
+  margin-left: 3px;
+  margin-top: 8px;
+}
+
+#id_operation {
+  display: flex;
+}
+
+#id_operation div {
+  margin-right: 10px; /* Adjust as needed */
+}

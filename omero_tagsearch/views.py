@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from builtins import str
 import json
 import logging
+from collections import defaultdict
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.template.loader import render_to_string
@@ -172,48 +173,81 @@ def index(request, conn=None, **kwargs):
     myGroups.sort(key=lambda x: x.getName().lower())
     new_container_form = ContainerForm()
 
+    fullname_d = {exp.getId(): exp for exp in leaders + members}
+    user_name = ""
+    if user_id != -1:
+        user_name = fullname_d[user_id].getFullName()
+
     # Create and set the form
 
-    params = Parameters()
     qs = conn.getQueryService()
     service_opts = conn.SERVICE_OPTS.copy()
     service_opts.setOmeroGroup(active_group)
 
-    def get_tags(obj):
+    def get_tagsets():
+        # Get tagsets for tag_ids
+        # Do not filter tagsets on user, as it's meant to be
+        # information added to tags
 
+        params = Parameters()
+        hql = (
+            """
+            SELECT DISTINCT link.child.id, tagset.textValue
+            FROM Annotation tagset
+            JOIN tagset.annotationLinks link
+            WHERE tagset.class IS TagAnnotation
+            """
+        )
+
+        return {
+            result[0].val: f" [{result[1].val}]"
+            for result in qs.projection(hql, params, service_opts)
+        }
+
+    def get_tags(obj, tagset_d):
         # Get tags
         # It is not sufficient to simply get the objects as there may be tags
         # which are not applied which don't really make sense to display
         # tags = list(self.conn.getObjects("TagAnnotation"))
+
+        params = Parameters()
         hql = (
             """
-            SELECT DISTINCT link.child.id, link.child.textValue
+            SELECT DISTINCT ann.id, ann.textValue
             FROM %sAnnotationLink link
-            WHERE link.child.class IS TagAnnotation
-            ORDER BY link.child.textValue
+            JOIN link.child ann
+            WHERE ann.class IS TagAnnotation
         """
             % obj
         )
 
+        if user_id != -1:
+            hql += f" AND ann.details.owner.id = (:uid)"
+            params.map = {"uid": rlong(user_id)}
+
         return [
-            (result[0].val, result[1].val)
+            (result[0].val, result[1].val, tagset_d[result[0].val])
             for result in qs.projection(hql, params, service_opts)
         ]
 
+    tagset_d = defaultdict(str)
+    tagset_d.update(get_tagsets())
+
     # List of tuples (id, value)
-    tags = set(get_tags("Image"))
-    tags.update(get_tags("Dataset"))
-    tags.update(get_tags("Project"))
-    tags.update(get_tags("Plate"))
-    tags.update(get_tags("PlateAcquisition"))
-    tags.update(get_tags("Screen"))
-    tags.update(get_tags("Well"))
+    tags = set(get_tags("Image", tagset_d))
+    tags.update(get_tags("Dataset", tagset_d))
+    tags.update(get_tags("Project", tagset_d))
+    tags.update(get_tags("Plate", tagset_d))
+    tags.update(get_tags("PlateAcquisition", tagset_d))
+    tags.update(get_tags("Screen", tagset_d))
+    tags.update(get_tags("Well", tagset_d))
 
     # Convert back to an ordered list and sort
     tags = list(tags)
-    tags.sort(key=lambda x: x[1].lower())
+    tags.sort(key=lambda x: (x[2].lower(), x[1].lower()))
+    tags = list(map(lambda t: (t[0], t[1] + t[2]), tags))
 
-    form = TagSearchForm(tags, conn, initial={"results_preview": True})
+    form = TagSearchForm(tags, conn, use_required_attribute=False)
 
     context = {
         "init": init,
@@ -231,6 +265,7 @@ def index(request, conn=None, **kwargs):
     context["current_url"] = url
     context["template"] = template
     context["tagnav_form"] = form
+    context["user_name"] = user_name
 
     return context
 
@@ -246,7 +281,8 @@ def tag_image_search(request, conn=None, **kwargs):
     if request.method == "POST":
 
         selected_tags = [int(x) for x in request.POST.getlist("selectedTags")]
-        results_preview = bool(request.POST.get("results_preview"))
+        excluded_tags = [int(x) for x in request.POST.getlist("excludedTags")]
+        operation = request.POST.get("operation")
 
         # validate experimenter is in the active group
         active_group = (
@@ -255,17 +291,23 @@ def tag_image_search(request, conn=None, **kwargs):
         service_opts = conn.SERVICE_OPTS.copy()
         service_opts.setOmeroGroup(active_group)
 
-        def getObjectsWithAllAnnotations(obj_type, annids):
+        def getObjectsWithAnnotations(obj_type, include_ids, exclude_ids):
             # Get the images that match
-            hql = (
-                "select link.parent.id from %sAnnotationLink link "
-                "where link.child.id in (:oids) "
-                "group by link.parent.id "
-                "having count (distinct link.child) = %s" % (obj_type, len(annids))
-            )
             params = Parameters()
             params.map = {}
-            params.map["oids"] = rlist([rlong(o) for o in set(annids)])
+            params.map["incl_ids"] = rlist([rlong(o) for o in set(include_ids)])
+
+            hql = ("select link.parent.id from %sAnnotationLink link "
+                   "where link.child.id in (:incl_ids) " % (obj_type))
+            if len(exclude_ids) > 0:
+                hql += (" and link.parent.id not in "
+                        "(select link.parent.id from %sAnnotationLink link "
+                        "where link.child.id in (:excl_ids)) " % (obj_type))
+                params.map["excl_ids"] = rlist([rlong(o) for o in set(exclude_ids)])
+
+            hql += "group by link.parent.id"
+            if operation == "AND":
+                hql += f" having count (distinct link.child) = {len(include_ids)}"
 
             qs = conn.getQueryService()
             return [x[0].getValue() for x in qs.projection(hql, params, service_opts)]
@@ -276,90 +318,67 @@ def tag_image_search(request, conn=None, **kwargs):
 
         manager = {"containers": {}}
         preview = False
-        project_count = 0
-        dataset_count = 0
-        screen_count = 0
-        plate_count = 0
-        acquisition_count = 0
-        well_count = 0
-        image_count = 0
-
+        count_d = {}
         if selected_tags:
-            image_ids = getObjectsWithAllAnnotations("Image", selected_tags)
-            context["image_count"] = len(image_ids)
-            image_count = len(image_ids)
+            image_ids = getObjectsWithAnnotations("Image", selected_tags, excluded_tags)
+            count_d["image"] = len(image_ids)
 
-            dataset_ids = getObjectsWithAllAnnotations("Dataset", selected_tags)
-            context["dataset_count"] = len(dataset_ids)
-            dataset_count = len(dataset_ids)
+            dataset_ids = getObjectsWithAnnotations("Dataset", selected_tags, excluded_tags)
+            count_d["dataset"] = len(dataset_ids)
 
-            project_ids = getObjectsWithAllAnnotations("Project", selected_tags)
-            context["project_count"] = len(project_ids)
-            project_count = len(project_ids)
+            project_ids = getObjectsWithAnnotations("Project", selected_tags, excluded_tags)
+            count_d["project"] = len(project_ids)
 
-            screen_ids = getObjectsWithAllAnnotations("Screen", selected_tags)
-            context["screen_count"] = len(screen_ids)
-            screen_count = len(screen_ids)
+            screen_ids = getObjectsWithAnnotations("Screen", selected_tags, excluded_tags)
+            count_d["screen"] = len(screen_ids)
 
-            plate_ids = getObjectsWithAllAnnotations("Plate", selected_tags)
-            context["plate_count"] = len(plate_ids)
-            plate_count = len(plate_ids)
+            plate_ids = getObjectsWithAnnotations("Plate", selected_tags, excluded_tags)
+            count_d["plate"] = len(plate_ids)
 
-            well_ids = getObjectsWithAllAnnotations("Well", selected_tags)
-            context["well_count"] = len(well_ids)
-            well_count = len(well_ids)
+            well_ids = getObjectsWithAnnotations("Well", selected_tags, excluded_tags)
+            count_d["well"] = len(well_ids)
 
-            acquisition_ids = getObjectsWithAllAnnotations(
-                "PlateAcquisition", selected_tags
+            acquisition_ids = getObjectsWithAnnotations(
+                "PlateAcquisition", selected_tags, excluded_tags
             )
-            context["acquisition_count"] = len(acquisition_ids)
-            acquisition_count = len(acquisition_ids)
+            count_d["acquisition"] = len(acquisition_ids)
 
-            if results_preview:
-                if image_ids:
-                    images = conn.getObjects("Image", ids=image_ids)
-                    manager["containers"]["image"] = list(images)
+            if image_ids:
+                images = conn.getObjects("Image", ids=image_ids)
+                manager["containers"]["image"] = list(images)
 
-                if dataset_ids:
-                    datasets = conn.getObjects("Dataset", ids=dataset_ids)
-                    manager["containers"]["dataset"] = list(datasets)
+            if dataset_ids:
+                datasets = conn.getObjects("Dataset", ids=dataset_ids)
+                manager["containers"]["dataset"] = list(datasets)
 
-                if project_ids:
-                    projects = conn.getObjects("Project", ids=project_ids)
-                    manager["containers"]["project"] = list(projects)
+            if project_ids:
+                projects = conn.getObjects("Project", ids=project_ids)
+                manager["containers"]["project"] = list(projects)
 
-                if screen_ids:
-                    screens = conn.getObjects("Screen", ids=screen_ids)
-                    manager["containers"]["screen"] = list(screens)
+            if screen_ids:
+                screens = conn.getObjects("Screen", ids=screen_ids)
+                manager["containers"]["screen"] = list(screens)
 
-                if plate_ids:
-                    plates = conn.getObjects("Plate", ids=plate_ids)
-                    manager["containers"]["plate"] = list(plates)
+            if plate_ids:
+                plates = conn.getObjects("Plate", ids=plate_ids)
+                manager["containers"]["plate"] = list(plates)
 
-                if well_ids:
-                    wells = []
-                    for well in  conn.getObjects("Well", ids=well_ids):
-                        well.name = well.getParent().name + f" - {well.getWellPos()}"
-                        wells.append(well)
-                    manager["containers"]["well"] = wells
+            if well_ids:
+                wells = []
+                for well in  conn.getObjects("Well", ids=well_ids):
+                    well.name = well.getParent().name + f" - {well.getWellPos()}"
+                    wells.append(well)
+                manager["containers"]["well"] = wells
 
-                if acquisition_ids:
-                    acquisitions = conn.getObjects(
-                        "PlateAcquisition", ids=acquisition_ids
-                    )
-                    manager["containers"]["acquisition"] = list(acquisitions)
-
-                manager["c_size"] = (
-                    len(image_ids)
-                    + len(dataset_ids)
-                    + len(project_ids)
-                    + len(screen_ids)
-                    + len(plate_ids)
-                    + len(well_ids)
-                    + len(acquisition_ids)
+            if acquisition_ids:
+                acquisitions = conn.getObjects(
+                    "PlateAcquisition", ids=acquisition_ids
                 )
-                if manager["c_size"] > 0:
-                    preview = True
+                manager["containers"]["acquisition"] = list(acquisitions)
+
+            manager["c_size"] = sum(count_d.values())
+            if manager["c_size"] > 0:
+                preview = True
 
             context["manager"] = manager
 
@@ -371,14 +390,14 @@ def tag_image_search(request, conn=None, **kwargs):
 
             def getAnnotationsForObjects(obj_type, oids):
                 # Get the images that match
-                hql = (
-                    "select distinct link.child.id from %sAnnotationLink link "
-                    "where link.parent.id in (:oids)" % obj_type
-                )
-
                 params = Parameters()
                 params.map = {}
-                params.map["oids"] = rlist([rlong(o) for o in oids])
+                hql = (
+                    "select distinct link.child.id from %sAnnotationLink link " % obj_type
+                )
+                if operation == "AND":
+                    hql += "where link.parent.id in (:oids)"
+                    params.map["oids"] = rlist([rlong(o) for o in oids])
 
                 qs = conn.getQueryService()
                 return [
@@ -400,22 +419,23 @@ def tag_image_search(request, conn=None, **kwargs):
             #     WHERE link.parent.id IN (%s)
             # """ % sub_hql
 
-            if image_ids:
-                remaining.update(getAnnotationsForObjects("Image", image_ids))
-            if dataset_ids:
-                remaining.update(getAnnotationsForObjects("Dataset", dataset_ids))
-            if project_ids:
-                remaining.update(getAnnotationsForObjects("Project", project_ids))
-            if well_ids:
-                remaining.update(getAnnotationsForObjects("Well", well_ids))
-            if acquisition_ids:
-                remaining.update(
-                    getAnnotationsForObjects("PlateAcquisition", acquisition_ids)
-                )
-            if plate_ids:
-                remaining.update(getAnnotationsForObjects("Plate", plate_ids))
-            if screen_ids:
-                remaining.update(getAnnotationsForObjects("Screen", screen_ids))
+            if operation == "AND":
+                if image_ids:
+                    remaining.update(getAnnotationsForObjects("Image", image_ids))
+                if dataset_ids:
+                    remaining.update(getAnnotationsForObjects("Dataset", dataset_ids))
+                if project_ids:
+                    remaining.update(getAnnotationsForObjects("Project", project_ids))
+                if well_ids:
+                    remaining.update(getAnnotationsForObjects("Well", well_ids))
+                if acquisition_ids:
+                    remaining.update(
+                        getAnnotationsForObjects("PlateAcquisition", acquisition_ids)
+                    )
+                if plate_ids:
+                    remaining.update(getAnnotationsForObjects("Plate", plate_ids))
+                if screen_ids:
+                    remaining.update(getAnnotationsForObjects("Screen", screen_ids))
 
             end = time.time()
             logger.info(
@@ -430,13 +450,7 @@ def tag_image_search(request, conn=None, **kwargs):
                 {
                     "navdata": list(remaining),
                     "preview": preview,
-                    "project_count": project_count,
-                    "dataset_count": dataset_count,
-                    "screen_count": screen_count,
-                    "plate_count": plate_count,
-                    "acquisition_count": acquisition_count,
-                    "well_count": well_count,
-                    "image_count": image_count,
+                    "count": count_d,
                     "html": html_response,
                 }
             ),
