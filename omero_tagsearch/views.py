@@ -89,7 +89,7 @@ def index(request, conn=None, **kwargs):
                     selected = parent_node
                     init["initially_open"] = [f"{ptype}-{parent_node.getId()}"]
                     init["initially_select"] = init["initially_open"][:]
-        except ValueError:
+        except Exception:
             # invalid id
             pass
         if first_obj not in ("project", "screen"):
@@ -145,7 +145,7 @@ def index(request, conn=None, **kwargs):
             user_id = initially_open_owner
     try:
         user_id = int(user_id)
-    except ValueError:
+    except Exception:
         user_id = None
 
     # Check is user_id is in a current group
