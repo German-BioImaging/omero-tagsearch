@@ -283,11 +283,11 @@ def tag_image_search(request, conn=None, **kwargs):
     import time
 
     start = time.time()
-    if request.method == "POST":
+    if request.method == "GET":
 
-        selected_tags = [int(x) for x in request.POST.getlist("selectedTags")]
-        excluded_tags = [int(x) for x in request.POST.getlist("excludedTags")]
-        operation = request.POST.get("operation")
+        selected_tags = [int(x) for x in request.GET.getlist("selectedTags")]
+        excluded_tags = [int(x) for x in request.GET.getlist("excludedTags")]
+        operation = request.GET.get("operation")
 
         # validate experimenter is in the active group
         active_group = (
