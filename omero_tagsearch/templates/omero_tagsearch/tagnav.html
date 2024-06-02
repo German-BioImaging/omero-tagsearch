@@ -221,7 +221,7 @@
 
 <div id="searching">
   <div class="left_panel_inner">
-      <form id="tagSearchForm" action="{% url 'wtsimages' %}" method="post" class="standard_form">{% csrf_token %}
+      <form id="tagSearchForm" action="{% url 'wtsimages' %}" method="get" class="standard_form">{% csrf_token %}
           <h2>{% trans "Tag Search" %}</h2>
           {# {{ tagnav_form.as_p }} #}
           {{ tagnav_form.non_field_errors }}
