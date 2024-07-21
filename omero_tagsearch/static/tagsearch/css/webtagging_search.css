@@ -10,7 +10,7 @@
     margin-bottom:25px;
     }
 
-#id_selectedTags, #id_selectedTags_user {
+#id_selectedTags, #id_excludedTags {
   width:200px;
 }
 
@@ -118,7 +118,7 @@ ul#id_operation li{
 
 #id_userName {
   margin-top: 5px;
-  margin-bottom: 5px;
+  margin-bottom: 15px;
   display: inline-block;
 }
 
