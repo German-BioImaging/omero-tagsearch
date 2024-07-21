@@ -250,7 +250,7 @@ def index(request, conn=None, **kwargs):
         ownership_l = [1] * len(tags)
     else:
         ownership_l = []
-        for i, (id_,_,_,owner) in enumerate(tags):
+        for i, (id_, _, _, owner) in enumerate(tags):
             if int(owner == user_id):
                 ownership_l.append(id_)
 
