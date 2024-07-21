@@ -87,7 +87,11 @@
                       $(this).show();
                     }
                   });
+                  var selection_incl = $('#id_selectedTags').getSelectionOrder();
+                  var selection_excl = $('#id_excludedTags').getSelectionOrder();
                   $('#id_selectedTags, #id_excludedTags').trigger("chosen:updated");
+                  $('#id_selectedTags').setSelectionOrder(selection_incl);
+                  $("#id_excludedTags").setSelectionOrder(selection_excl);
                 });
 
                 // Form Submission
