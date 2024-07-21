@@ -83,7 +83,7 @@
                     var inOwnershipList = $.inArray(optionValue, ownership_l) !== -1;
                     if (filter_user && !inOwnershipList) {
                       $(this).hide();
-                    } else {
+                    } else if (!$(this).hasClass('hidfromresults')) {
                       $(this).show();
                     }
                   });
@@ -121,8 +121,10 @@
                            && (data.navdata.length != 0))
                           || (filter_user && ($.inArray(tag_value, ownership_l) == -1))) {
                         $(this).hide();
+                        $(this).addClass('hidfromresults');
                       } else {
                         $(this).show();
+                        $(this).removeClass('hidfromresults');
                       }
                     });
 
