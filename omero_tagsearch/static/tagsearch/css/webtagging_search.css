@@ -45,18 +45,18 @@
 }
 
 .tagnav-icon {
-  background-position: 0 0;
-  background-position: center top;
+  background-position: center bottom;
   height: 16px;
   width: 17px;
   display: inline-block;
   text-decoration: none;
-  margin: 0 0 3px 0;
+  margin: 3px 5px 2px 3px;
   padding: 0;
 }
 
 .tagnav-user .tagnav-icon {
   background: url('../image/icon_user.png') no-repeat;
+  margin: 0 0 0 0;
 }
 
 .tagnav-project .tagnav-icon {

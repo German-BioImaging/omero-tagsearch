@@ -241,11 +241,13 @@
           {{ tagnav_form.non_field_errors }}
 
           {% if user_name %}
-            <div id="id_userName" class="tagnav-user">
-              <span><input type="checkbox" id="user_filter_on"> Filter tags for</span>
-              &nbsp;<span>{{ user_name }}</span>
-              <div class="tagnav-icon">&nbsp;</div>
-            </div>
+          <div id="id_userName" class="tagnav-user">
+            <span>
+              <input type="checkbox" id="user_filter_on"> Filter tags for {{ user_name }}
+              &nbsp;<span class="tagnav-icon"></span>
+            </span>
+
+          </div>
           {% endif %}
 
           <div class="fieldWrapper">
