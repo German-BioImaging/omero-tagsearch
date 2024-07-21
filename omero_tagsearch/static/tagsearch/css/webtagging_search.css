@@ -10,11 +10,7 @@
     margin-bottom:25px;
     }
 
-#id_selectedTags {
-  width:200px;
-}
-
-#id_excludedTags {
+#id_selectedTags, #id_selectedTags_user {
   width:200px;
 }
 

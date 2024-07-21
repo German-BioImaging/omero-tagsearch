@@ -217,7 +217,7 @@ def index(request, conn=None, **kwargs):
         params = Parameters()
         hql = (
             """
-            SELECT DISTINCT ann.id, ann.textValue
+            SELECT DISTINCT ann.id, ann.textValue, ann.details.owner.id
             FROM %sAnnotationLink link
             JOIN link.child ann
             WHERE ann.class IS TagAnnotation
@@ -225,19 +225,16 @@ def index(request, conn=None, **kwargs):
             % obj
         )
 
-        if user_id != -1:
-            hql += " AND ann.details.owner.id = (:uid)"
-            params.map = {"uid": rlong(user_id)}
-
         return [
-            (result[0].val, result[1].val, tagset_d[result[0].val])
+            (result[0].val, result[1].val,
+             tagset_d[result[0].val], result[2].val)
             for result in qs.projection(hql, params, service_opts)
         ]
 
     tagset_d = defaultdict(str)
     tagset_d.update(get_tagsets())
 
-    # List of tuples (id, value)
+    # List of tuples (id, value, tagset, owner)
     tags = set(get_tags("Image", tagset_d))
     tags.update(get_tags("Dataset", tagset_d))
     tags.update(get_tags("Project", tagset_d))
@@ -249,6 +246,14 @@ def index(request, conn=None, **kwargs):
     # Convert back to an ordered list and sort
     tags = list(tags)
     tags.sort(key=lambda x: (x[2].lower(), x[1].lower()))
+    if user_id == -1:
+        ownership_l = [1] * len(tags)
+    else:
+        ownership_l = []
+        for i, (id_,_,_,owner) in enumerate(tags):
+            if int(owner == user_id):
+                ownership_l.append(id_)
+
     tags = list(map(lambda t: (t[0], t[1] + t[2]), tags))
 
     form = TagSearchForm(tags, conn, use_required_attribute=False)
@@ -271,6 +276,7 @@ def index(request, conn=None, **kwargs):
     context["template"] = template
     context["tagnav_form"] = form
     context["user_name"] = user_name
+    context["ownership_l"] = ownership_l
 
     return context
 
