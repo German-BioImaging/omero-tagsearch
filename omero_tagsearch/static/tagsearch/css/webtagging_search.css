@@ -10,11 +10,7 @@
     margin-bottom:25px;
     }
 
-#id_selectedTags {
-  width:200px;
-}
-
-#id_excludedTags {
+#id_selectedTags, #id_excludedTags, #id_selectedKeys {
   width:200px;
 }
 
@@ -23,6 +19,7 @@
     flex-direction: row;
     align-items: center;
     margin-bottom: 1px; /* Adjust as needed */
+    width:200px;
 }
 
 .tagSearchDivider label {

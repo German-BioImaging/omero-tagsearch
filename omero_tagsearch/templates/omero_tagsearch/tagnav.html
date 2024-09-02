@@ -53,6 +53,7 @@
                 var objTypes = ['project', 'dataset', 'image', 'screen', 'plate', 'acquisition', 'well']
                 $("#id_selectedTags").chosen({placeholder_text:'Choose tags'});
                 $("#id_excludedTags").chosen({placeholder_text:'Choose tags to exclude'});
+                $("#id_selectedKeys").chosen({placeholder_text:'Choose keys'});
 
                 $(".searching_info").tooltip({
                     track: true,
@@ -109,16 +110,27 @@
                       }
                     });
 
+                    $("#id_selectedKeys option").each(function() {
+                      if (($.inArray(parseInt(this.value), data.navdata) == -1) && (data.navdata.length != 0)) {
+                        $(this).hide();
+                      } else {
+                        $(this).css('display', '');
+                      }
+                    });
+
                     // Preserve the order of the select because otherwise Chosen will show the same order as
                     // the underlying select. i.e. the original option ordering
                     var selection_incl = $('#id_selectedTags').getSelectionOrder();
                     var selection_excl = $('#id_excludedTags').getSelectionOrder();
+                    var selection_keys = $('#id_selectedKeys').getSelectionOrder();
                     // Update the chosen selector
                     $("#id_selectedTags").trigger("chosen:updated");
                     $("#id_excludedTags").trigger("chosen:updated");
+                    $("#id_selectedKeys").trigger("chosen:updated");
                     // Restore the ordering
                     $('#id_selectedTags').setSelectionOrder(selection_incl);
                     $("#id_excludedTags").setSelectionOrder(selection_excl);
+                    $('#id_selectedKeys').setSelectionOrder(selection_keys);
 
                     $('#id_search').quicksearch('table#dataTable tbody tr', {
                         'delay': 300,
@@ -157,6 +169,12 @@
                   }
                 });
                 $( "#id_excludedTags" ).chosen().change(function(event, params) {
+                  if ((params.selected || params.deselected) && $('#enableCheckbox').is(':checked')) {
+                    $("#tagSearchForm").submit();
+                  }
+                });
+                $( "#id_selectedKeys" ).chosen().change(function(event, params) {
+                  // Tag selection or deselection made
                   if ((params.selected || params.deselected) && $('#enableCheckbox').is(':checked')) {
                     $("#tagSearchForm").submit();
                   }
@@ -250,6 +268,15 @@
                     {{ tagnav_form.excludedTags }}&nbsp;
                     <span class="searching_info"
                     data-content="Remove from the results the objects annotated with excluded tags.</br>Only the tags of the selected group & user are listed.">
+                      <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
+                    </span>
+                  </div><br/>
+                  <div class ="field">
+                    {{ tagnav_form.selectedKeys.errors }}
+                    <label for="id_selectedKeys">Selected keys:</label>
+                      {{ tagnav_form.selectedKeys }}
+                    <span class="searching_info"
+                    data-content="Search objects annotated with selected keys.</br>Only the keys of the selected group & user are listed.</br>Multiple keys are combined according to the joining method.">
                       <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
                   </div><br/><br/>
