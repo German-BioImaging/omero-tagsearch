@@ -54,6 +54,7 @@
                 $("#id_selectedTags").chosen({placeholder_text:'Choose tags'});
                 $("#id_excludedTags").chosen({placeholder_text:'Choose tags to exclude'});
                 $("#id_selectedKeys").chosen({placeholder_text:'Choose keys'});
+                $("#id_selectedNamespaces").chosen({placeholder_text:'Choose ns'});
 
                 $(".searching_info").tooltip({
                     track: true,
@@ -123,14 +124,17 @@
                     var selection_incl = $('#id_selectedTags').getSelectionOrder();
                     var selection_excl = $('#id_excludedTags').getSelectionOrder();
                     var selection_keys = $('#id_selectedKeys').getSelectionOrder();
+                    var selection_namespaces = $('#id_selectedNamespaces').getSelectionOrder();
                     // Update the chosen selector
                     $("#id_selectedTags").trigger("chosen:updated");
                     $("#id_excludedTags").trigger("chosen:updated");
                     $("#id_selectedKeys").trigger("chosen:updated");
+                    $("#id_selectedNamespaces").trigger("chosen:updated");
                     // Restore the ordering
                     $('#id_selectedTags').setSelectionOrder(selection_incl);
                     $("#id_excludedTags").setSelectionOrder(selection_excl);
                     $('#id_selectedKeys').setSelectionOrder(selection_keys);
+                    $('#id_selectedNamespaces').setSelectionOrder(selection_namespaces);
 
                     $('#id_search').quicksearch('table#dataTable tbody tr', {
                         'delay': 300,
@@ -169,6 +173,12 @@
                   }
                 });
                 $( "#id_excludedTags" ).chosen().change(function(event, params) {
+                  if ((params.selected || params.deselected) && $('#enableCheckbox').is(':checked')) {
+                    $("#tagSearchForm").submit();
+                  }
+                });
+                $( "#id_selectedNamespaces" ).chosen().change(function(event, params) {
+                  // Tag selection or deselection made
                   if ((params.selected || params.deselected) && $('#enableCheckbox').is(':checked')) {
                     $("#tagSearchForm").submit();
                   }
@@ -271,15 +281,6 @@
                       <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
                   </div><br/>
-                  <div class ="field">
-                    {{ tagnav_form.selectedKeys.errors }}
-                    <label for="id_selectedKeys">Selected keys:</label>
-                      {{ tagnav_form.selectedKeys }}
-                    <span class="searching_info"
-                    data-content="Search objects annotated with selected keys.</br>Only the keys of the selected group & user are listed.</br>Multiple keys are combined according to the joining method.">
-                      <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
-                    </span>
-                  </div><br/><br/>
                   <div>
                     <label for="id_operation">Joining method:</label>
                     <span class="searching_info"
@@ -289,6 +290,27 @@
                     {{ tagnav_form.operation }}
                   </div><br/>
               </div>
+
+               <div class="keyValueSearchDivider">
+                   <div class ="field">
+                       {{ tagnav_form.selectedNamespaces.errors }}
+                        <label for="id_selectedNamespaces">Selected Namespaces:</label>
+                        {{ tagnav_form.selectedNamespaces }}
+                        <span class="searching_info"
+                            data-content="Select the namespace(s) you want to search into">
+                            <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
+                        </span>
+                   </div><br/><br/>
+                   <div class ="field">
+                        {{ tagnav_form.selectedKeys.errors }}
+                        <label for="id_selectedKeys">Selected keys:</label>
+                        {{ tagnav_form.selectedKeys }}
+                        <span class="searching_info"
+                            data-content="Search objects annotated with selected keys.</br>Only the keys of the selected group & user are listed.</br>Multiple keys are combined according to the joining method.">
+                            <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
+                        </span>
+                  </div><br/><br/>
+               </div>
 
               <h2>Results</h2>
               <ul id="counts_list">

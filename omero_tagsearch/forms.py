@@ -6,6 +6,7 @@ class TagSearchForm(Form):
     selectedTags = MultipleChoiceField()
     excludedTags = MultipleChoiceField()
     selectedKeys = MultipleChoiceField()
+    selectedNamespaces = MultipleChoiceField()
 
     operation = ChoiceField(
         widget=RadioSelect,
@@ -20,11 +21,12 @@ class TagSearchForm(Form):
     view_plate = BooleanField(initial=True)
     view_screen = BooleanField(initial=True)
 
-    def __init__(self, tags, keys, conn=None, *args, **kwargs):
+    def __init__(self, tags, keys, namespaces, conn=None, *args, **kwargs):
         super(TagSearchForm, self).__init__(*args, **kwargs)
 
         # Process Tags into choices (lists of tuples)
         self.fields["selectedTags"].choices = tags
         self.fields["excludedTags"].choices = tags
         self.fields["selectedKeys"].choices = keys
+        self.fields["selectedNamespaces"].choices = namespaces
         self.conn = conn

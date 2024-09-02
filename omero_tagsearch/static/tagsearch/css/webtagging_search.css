@@ -1,4 +1,4 @@
-.tagSearchDivider {
+.tagSearchDivider, .keyValueSearchDivider {
     border-bottom:solid 1px hsl(210,20%,90%);
     -webkit-box-shadow:0 1px 0 rgba(255,255,255,.3);
 
@@ -10,8 +10,20 @@
     margin-bottom:25px;
     }
 
-#id_selectedTags, #id_excludedTags, #id_selectedKeys {
+#id_selectedTags{
   width:200px;
+}
+
+#id_excludedTags {
+  width:200px;
+}
+
+#id_selectedKeys {
+  width:200px;
+}
+
+#id_selectedNamespaces {
+  width:300px;
 }
 
 .tagSearchDivider .field {
@@ -19,11 +31,22 @@
     flex-direction: row;
     align-items: center;
     margin-bottom: 1px; /* Adjust as needed */
-    width:200px;
 }
 
 .tagSearchDivider label {
     width:100px;
+    margin-right: 10px; /* Adjust as needed */
+}
+
+.keyValueSearchDivider .field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 1px; /* Adjust as needed */
+}
+
+.keyValueSearchDivider label {
+    width:150px;
     margin-right: 10px; /* Adjust as needed */
 }
 
