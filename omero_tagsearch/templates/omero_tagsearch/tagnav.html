@@ -293,9 +293,9 @@
                         </span>
                   </div><br/><br/>
                     <div class ="field">
-                        {{ tagnav_form.selectedKey2.errors }}
-                        <label for="id_selectedKey2">Selected keys:</label>
-                        {{ tagnav_form.selectedKey2 }}
+                        {{ tagnav_form.selectedKey1.errors }}
+                        <label for="id_selectedKey1">Selected keys:</label>
+                        {{ tagnav_form.selectedKey1 }}
                         <span class="searching_info"
                             data-content="Search objects annotated with selected keys.</br>Only the keys of the selected group & user are listed.</br>Multiple keys are combined according to the joining method.">
                             <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
@@ -310,7 +310,7 @@
                         });
                    </script>
                    <script>
-                       $( "#id_selectedKey2" ).chosen().change(function(event, params) {
+                       $( "#id_selectedKey1" ).chosen().change(function(event, params) {
                           // Tag selection or deselection made
                           if ((params.selected || params.deselected) && $('#enableCheckbox').is(':checked')) {
                             $("#tagSearchForm").submit();

@@ -306,7 +306,7 @@ def index(request, conn=None, **kwargs):
     # Convert back to an ordered list and sort
     kvps = list(kvps)
     kvps.sort(key=lambda x: x[1].lower())
-    keys = list(map(lambda t: (t[0], t[1]), kvps)) #[(x[0], x[1]) for x in kvps]
+    keys = sorted(list(set(map(lambda t: (t[1], t[1]), kvps))))
 
     namespaces = [(x, x) for x in namespaces]
 
@@ -342,10 +342,20 @@ def tag_image_search(request, conn=None, **kwargs):
     import time
 
     start = time.time()
-
     selected_tags = [int(x) for x in request.GET.getlist("selectedTags")]
     excluded_tags = [int(x) for x in request.GET.getlist("excludedTags")]
-    selected_keys = [int(x) for x in request.GET.getlist("selectedKeys")]
+    selected_keys = []
+
+    empty_keys = False
+    i = 0
+    while not empty_keys:
+        selected_key = str(request.GET.get(f"selectedKey{i}", "1"))
+        if selected_key == "1":
+            empty_keys = True
+        else:
+            selected_keys.append(selected_key)
+        i += 1
+
     selected_namespaces = [f"'{x}'" for x in request.GET.getlist("selectedNamespaces")]
 
     operation = request.GET.get("operation")
@@ -358,19 +368,30 @@ def tag_image_search(request, conn=None, **kwargs):
     service_opts = conn.SERVICE_OPTS.copy()
     service_opts.setOmeroGroup(active_group)
 
-    def get_annotated_obj(obj_type, in_ids, excl_ids, key_ids, ns_list):
+    def get_annotated_obj(obj_type, in_ids, excl_ids, keys, ns_list):
         # Get the images that match
         params = Parameters()
         params.map = {}
-        ann_ids = in_ids
-        ann_ids.extend(key_ids)
-        params.map["in_ids"] = rlist([rlong(o) for o in set(ann_ids)])
+       # ann_ids.extend(keys)
+       # params.map["in_ids"] = rlist([rlong(o) for o in set(ann_ids)])
 
-        hql = ("select link.parent.id from %sAnnotationLink link "
-               "where link.child.id in (%s)" % (obj_type, ",".join([str(x) for x in ann_ids])))
 
-        if len(ns_list) > 0:
-            hql += " and link.child.ns in (%s)" % ",".join([str(x) for x in ns_list])
+        tag_query = ""
+        key_query = ""
+        namespace_query = ""
+
+        if len(in_ids) > 0:
+            tag_query = "link.child.id in (%s)" % ",".join([str(x) for x in in_ids])
+        if len(keys) > 0:
+            if tag_query != "":
+                key_query = "or "
+            key_query += "link.child.id in (select distinct a.id from " \
+                       "Annotation a join a.mapValue mv where mv.name in (%s))" % ",".join([f"'{x}'" for x in keys])
+            if len(ns_list) > 0:
+                namespace_query = " and link.child.ns in (%s)" % ",".join([str(x) for x in ns_list])
+
+        hql = ("select link.parent.id from %sAnnotationLink link where %s %s %s"
+               % (obj_type, tag_query, key_query, namespace_query))
 
         if len(excl_ids) > 0:
             params.map["ex_ids"] = rlist([rlong(o) for o in set(excl_ids)])
@@ -380,7 +401,7 @@ def tag_image_search(request, conn=None, **kwargs):
 
         hql += " group by link.parent.id"
         if operation == "AND":
-            hql += f" having count (distinct link.child) = {len(set(ann_ids))}"
+            hql += f" having count (distinct link.child) = {(len(set(in_ids)) + len(set(keys)))}"
 
         qs = conn.getQueryService()
         return [x[0].getValue() for x in qs.projection(hql,
