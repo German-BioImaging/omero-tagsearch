@@ -307,6 +307,7 @@ def index(request, conn=None, **kwargs):
     kvps = list(kvps)
     kvps.sort(key=lambda x: x[1].lower())
     keys = sorted(list(set(map(lambda t: (t[1], t[1]), kvps))))
+    keys.insert(0, ("_Choose Key_", "_Choose Key_"))
 
     namespaces = [(x, x) for x in namespaces]
 
@@ -353,7 +354,8 @@ def tag_image_search(request, conn=None, **kwargs):
         if selected_key == "1":
             empty_keys = True
         else:
-            selected_keys.append(selected_key)
+            if selected_key != "_Choose Key_":
+                selected_keys.append(selected_key)
         i += 1
 
     selected_namespaces = [f"'{x}'" for x in request.GET.getlist("selectedNamespaces")]
