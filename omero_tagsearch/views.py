@@ -188,25 +188,23 @@ def index(request, conn=None, **kwargs):
     service_opts = conn.SERVICE_OPTS.copy()
     service_opts.setOmeroGroup(active_group)
 
-    def get_tagsets():
-        # Get tagsets for tag_ids
-        # Do not filter tagsets on user, as it's meant to be
-        # information added to tags
+    def get_namespaces():
 
         params = Parameters()
         hql = (
-            """
-            SELECT DISTINCT link.child.id, tagset.textValue
-            FROM Annotation tagset
-            JOIN tagset.annotationLinks link
-            WHERE tagset.class IS TagAnnotation
+                """
+                SELECT DISTINCT ann.ns
+                FROM Annotation ann
             """
         )
 
-        return {
-            result[0].val: f" [{result[1].val}]"
-            for result in qs.projection(hql, params, service_opts)
-        }
+        if user_id != -1:
+            hql += " WHERE ann.details.owner.id = (:uid)"
+            params.map = {"uid": rlong(user_id)}
+
+        return [
+            result[0].val for result in qs.projection(hql, params, service_opts) if len(result) > 0
+        ]
 
     def get_tags(obj, tagset_d):
         # Get tags
@@ -234,6 +232,49 @@ def index(request, conn=None, **kwargs):
             for result in qs.projection(hql, params, service_opts)
         ]
 
+    def get_key_values(obj):
+        # Get keys
+
+        params = Parameters()
+        hql = (
+            """
+            SELECT DISTINCT ann.id, map.name, map.value
+            FROM %sAnnotationLink link
+            JOIN link.child ann
+            JOIN ann.mapValue map
+            WHERE ann.class IS MapAnnotation
+        """
+            % obj
+        )
+
+        if user_id != -1:
+            hql += " AND ann.details.owner.id = (:uid)"
+            params.map = {"uid": rlong(user_id)}
+
+        return [
+            (result[0].val, result[1].val, result[2].val) for result in qs.projection(hql, params, service_opts)
+        ]
+
+    def get_tagsets():
+        # Get tagsets for tag_ids
+        # Do not filter tagsets on user, as it's meant to be
+        # information added to tags
+
+        params = Parameters()
+        hql = (
+            """
+            SELECT DISTINCT link.child.id, tagset.textValue
+            FROM Annotation tagset
+            JOIN tagset.annotationLinks link
+            WHERE tagset.class IS TagAnnotation
+            """
+        )
+
+        return {
+            result[0].val: f" [{result[1].val}]"
+            for result in qs.projection(hql, params, service_opts)
+        }
+
     tagset_d = defaultdict(str)
     tagset_d.update(get_tagsets())
 
@@ -246,12 +287,33 @@ def index(request, conn=None, **kwargs):
     tags.update(get_tags("Screen", tagset_d))
     tags.update(get_tags("Well", tagset_d))
 
+    # List of tuples (name, value)
+    kvps = set(get_key_values("Image"))
+    kvps.update(get_key_values("Dataset"))
+    kvps.update(get_key_values("Project"))
+    kvps.update(get_key_values("Plate"))
+    kvps.update(get_key_values("PlateAcquisition"))
+    kvps.update(get_key_values("Screen"))
+    kvps.update(get_key_values("Well"))
+
+    namespaces = get_namespaces()
+
     # Convert back to an ordered list and sort
     tags = list(tags)
     tags.sort(key=lambda x: (x[2].lower(), x[1].lower()))
     tags = list(map(lambda t: (t[0], t[1] + t[2]), tags))
 
-    form = TagSearchForm(tags, conn, use_required_attribute=False)
+    # Convert back to an ordered list and sort
+    kvps = list(kvps)
+    kvps.sort(key=lambda x: x[1].lower())
+    keys = sorted(list(set(map(lambda t: (t[1], t[1]), kvps))))
+    keys.insert(0, ("_Choose Key_", "_Choose Key_"))
+    values = sorted(list(set(map(lambda t: (t[2], t[2]), kvps))))
+    values.insert(0, ("_Choose Value_", "_Choose Value_"))
+
+    namespaces = [(x, x) for x in namespaces]
+
+    tag_form = TagSearchForm(tags, keys, values, namespaces, conn, use_required_attribute=False)
 
     context = {
         "init": init,
@@ -269,7 +331,7 @@ def index(request, conn=None, **kwargs):
     context["isLeader"] = conn.isLeader()
     context["current_url"] = url
     context["template"] = template
-    context["tagnav_form"] = form
+    context["tagnav_form"] = tag_form
     context["user_name"] = user_name
 
     return context
@@ -282,10 +344,56 @@ def index(request, conn=None, **kwargs):
 def tag_image_search(request, conn=None, **kwargs):
     import time
 
-    start = time.time()
+    def get_values(key):
+        # Get values
+        params = Parameters()
+        hql = (
+            """
+            SELECT DISTINCT map.value
+            FROM Annotation ann
+            JOIN ann.mapValue map
+            WHERE map.name = %s
+        """
+            % f"'{key}'"
+        )
+        qs = conn.getQueryService()
+        return [
+            result[0].val for result in qs.projection(hql, params, conn.SERVICE_OPTS)
+        ]
 
+    start = time.time()
     selected_tags = [int(x) for x in request.GET.getlist("selectedTags")]
     excluded_tags = [int(x) for x in request.GET.getlist("excludedTags")]
+    selected_keys_values = []
+    selectable_values = {}
+
+    empty_keys = False
+    i = 0
+    # loop over all selected keys
+    while not empty_keys:
+        selected_key = str(request.GET.get(f"selectedKey{i}", "1"))
+        # no more keys are selected
+        if selected_key == "1":
+            empty_keys = True
+        else:
+            if selected_key != "_Choose Key_":
+                selected_key_value = {}
+                selected_values = [str(x) for x in request.GET.getlist(f"selectedValue{i}", "1")]
+                if len(selected_values) == "0" or \
+                        (len(selected_values) == 1 and
+                         (selected_values[0] == "_Choose Value_" or selected_values[0] == "1")):
+                    selected_key_value[selected_key] = []
+                    selectable_values[f"selectedValue{i}"] = get_values(selected_key)
+                else:
+                    selected_key_value[selected_key] = selected_values
+                    selectable_values[f"selectedValue{i}"] = None
+                selected_keys_values.append(selected_key_value)
+            else:
+                selectable_values[f"selectedValue{i}"] = []
+        i += 1
+
+    selected_namespaces = [f"'{x}'" for x in request.GET.getlist("selectedNamespaces")]
+
     operation = request.GET.get("operation")
 
     # validate experimenter is in the active group
@@ -296,23 +404,50 @@ def tag_image_search(request, conn=None, **kwargs):
     service_opts = conn.SERVICE_OPTS.copy()
     service_opts.setOmeroGroup(active_group)
 
-    def get_annotated_obj(obj_type, in_ids, excl_ids):
+    def get_annotated_obj(obj_type, in_ids, excl_ids, key_values, ns_list):
         # Get the images that match
         params = Parameters()
         params.map = {}
-        params.map["in_ids"] = rlist([rlong(o) for o in set(in_ids)])
 
-        hql = ("select link.parent.id from %sAnnotationLink link "
-               "where link.child.id in (:in_ids) " % (obj_type))
+        tag_query = ""
+        key_query = ""
+        namespace_query = ""
+
+        # get included tags
+        if len(in_ids) > 0:
+            tag_query = "link.child.id in (%s)" % ",".join([str(x) for x in in_ids])
+
+        # get key-values
+        if len(key_values) > 0:
+            if tag_query != "":
+                key_query = "or "
+            where_clause = []
+            for kv in key_values:
+                for k, v in kv.items():
+                    if len(v) > 0:
+                        where_clause.append("(mv.name in ('%s') and mv.value in (%s))" % (k, ",".join([f"'{x}'" for x in v])))
+                    else:
+                        where_clause.append("(mv.name in ('%s'))" % list(kv.keys())[0])
+            key_query += "link.child.id in (select distinct a.id from " \
+                       "Annotation a join a.mapValue mv where %s)" % (" or ".join(where_clause))
+
+            # get namespaces
+            if len(ns_list) > 0:
+                namespace_query = " and link.child.ns in (%s)" % ",".join([str(x) for x in ns_list])
+
+        hql = ("select link.parent.id from %sAnnotationLink link where %s %s %s"
+               % (obj_type, tag_query, key_query, namespace_query))
+
+        # get excluded tags
         if len(excl_ids) > 0:
             params.map["ex_ids"] = rlist([rlong(o) for o in set(excl_ids)])
             hql += (" and link.parent.id not in "
                     "(select link.parent.id from %sAnnotationLink link "
                     "where link.child.id in (:ex_ids)) " % (obj_type))
 
-        hql += "group by link.parent.id"
+        hql += " group by link.parent.id"
         if operation == "AND":
-            hql += f" having count (distinct link.child) = {len(in_ids)}"
+            hql += f" having count (distinct link.child) = {(len(set(in_ids)) + len(key_values))}"
 
         qs = conn.getQueryService()
         return [x[0].getValue() for x in qs.projection(hql,
@@ -326,33 +461,33 @@ def tag_image_search(request, conn=None, **kwargs):
     manager = {"containers": {}}
     preview = False
     count_d = {}
-    if selected_tags:
+    if selected_tags or selected_keys_values:
         image_ids = get_annotated_obj("Image", selected_tags,
-                                      excluded_tags)
+                                      excluded_tags, selected_keys_values, selected_namespaces)
         count_d["image"] = len(image_ids)
 
         dataset_ids = get_annotated_obj("Dataset", selected_tags,
-                                        excluded_tags)
+                                        excluded_tags, selected_keys_values, selected_namespaces)
         count_d["dataset"] = len(dataset_ids)
 
         project_ids = get_annotated_obj("Project", selected_tags,
-                                        excluded_tags)
+                                        excluded_tags, selected_keys_values, selected_namespaces)
         count_d["project"] = len(project_ids)
 
         screen_ids = get_annotated_obj("Screen", selected_tags,
-                                       excluded_tags)
+                                       excluded_tags, selected_keys_values, selected_namespaces)
         count_d["screen"] = len(screen_ids)
 
         plate_ids = get_annotated_obj("Plate", selected_tags,
-                                      excluded_tags)
+                                      excluded_tags, selected_keys_values, selected_namespaces)
         count_d["plate"] = len(plate_ids)
 
         well_ids = get_annotated_obj("Well", selected_tags,
-                                     excluded_tags)
+                                     excluded_tags, selected_keys_values, selected_namespaces)
         count_d["well"] = len(well_ids)
 
-        acquisition_ids = get_annotated_obj("PlateAcquisition",
-                                            selected_tags, excluded_tags)
+        acquisition_ids = get_annotated_obj("PlateAcquisition",selected_tags,
+                                            excluded_tags, selected_keys_values, selected_namespaces)
         count_d["acquisition"] = len(acquisition_ids)
 
         if image_ids:
@@ -470,6 +605,7 @@ def tag_image_search(request, conn=None, **kwargs):
         json.dumps(
             {
                 "navdata": list(remaining),
+                "values": selectable_values,
                 "preview": preview,
                 "count": count_d,
                 "html": html_response,

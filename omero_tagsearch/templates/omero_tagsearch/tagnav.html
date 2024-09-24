@@ -53,6 +53,7 @@
                 var objTypes = ['project', 'dataset', 'image', 'screen', 'plate', 'acquisition', 'well']
                 $("#id_selectedTags").chosen({placeholder_text:'Choose tags'});
                 $("#id_excludedTags").chosen({placeholder_text:'Choose tags to exclude'});
+                $("#id_selectedNamespaces").chosen({placeholder_text:'Choose ns'});
 
                 $(".searching_info").tooltip({
                     track: true,
@@ -109,16 +110,35 @@
                       }
                     });
 
+                    // update value fields according to what key is selected
+                    Object.keys(data.values).forEach(function(key) {
+                        if(data.values[key] && data.values[key].length != 0) {
+                            $("#id_"+key+" option").each(function() {
+                              if (($.inArray(this.value, data.values[key]) == -1)) {
+                                $(this).hide();
+                              } else {
+                                $(this).css('display', '');
+                              }
+                            });
+                            var selection = $("#id_"+key).getSelectionOrder();
+                            $("#id_"+key).trigger("chosen:updated");
+                            $("#id_"+key).setSelectionOrder(selection);
+                        }
+                    });
+
                     // Preserve the order of the select because otherwise Chosen will show the same order as
                     // the underlying select. i.e. the original option ordering
                     var selection_incl = $('#id_selectedTags').getSelectionOrder();
                     var selection_excl = $('#id_excludedTags').getSelectionOrder();
+                    var selection_namespaces = $('#id_selectedNamespaces').getSelectionOrder();
                     // Update the chosen selector
                     $("#id_selectedTags").trigger("chosen:updated");
                     $("#id_excludedTags").trigger("chosen:updated");
+                    $("#id_selectedNamespaces").trigger("chosen:updated");
                     // Restore the ordering
                     $('#id_selectedTags').setSelectionOrder(selection_incl);
                     $("#id_excludedTags").setSelectionOrder(selection_excl);
+                    $('#id_selectedNamespaces').setSelectionOrder(selection_namespaces);
 
                     $('#id_search').quicksearch('table#dataTable tbody tr', {
                         'delay': 300,
@@ -157,6 +177,12 @@
                   }
                 });
                 $( "#id_excludedTags" ).chosen().change(function(event, params) {
+                  if ((params.selected || params.deselected) && $('#enableCheckbox').is(':checked')) {
+                    $("#tagSearchForm").submit();
+                  }
+                });
+                $( "#id_selectedNamespaces" ).chosen().change(function(event, params) {
+                  // Tag selection or deselection made
                   if ((params.selected || params.deselected) && $('#enableCheckbox').is(':checked')) {
                     $("#tagSearchForm").submit();
                   }
@@ -252,7 +278,7 @@
                     data-content="Remove from the results the objects annotated with excluded tags.</br>Only the tags of the selected group & user are listed.">
                       <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
-                  </div><br/><br/>
+                  </div><br/>
                   <div>
                     <label for="id_operation">Joining method:</label>
                     <span class="searching_info"
@@ -262,6 +288,89 @@
                     {{ tagnav_form.operation }}
                   </div><br/>
               </div>
+
+               <div class="keyValueSearchDivider">
+                   <div class ="field">
+                       {{ tagnav_form.selectedNamespaces.errors }}
+                        <label for="id_selectedNamespaces">Selected Namespaces:</label>
+                        {{ tagnav_form.selectedNamespaces }}
+                        <span class="searching_info"
+                            data-content="Select the namespace(s) you want to search into">
+                            <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
+                        </span>
+                   </div><br/><br/>
+                   <div class ="field">
+                        {{ tagnav_form.selectedKey0.errors }}
+                        <label for="id_selectedKey0">Selected keys:</label>
+                        {{ tagnav_form.selectedKey0 }}
+                        <span class="searching_info"
+                            data-content="Search objects annotated with selected keys.</br>Only the keys of the selected group & user are listed.</br>Multiple keys are combined according to the joining method.">
+                            <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
+                        </span>
+                  </div>
+                   <div class ="field">
+                        {{ tagnav_form.selectedValue0.errors }}
+                        <label for="id_selectedValue0">Values:</label>
+                        {{ tagnav_form.selectedValue0 }}
+                        <span class="searching_info"
+                            data-content="Search objects annotated with selected keys.</br>Only the keys of the selected group & user are listed.</br>Multiple keys are combined according to the joining method.">
+                            <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
+                        </span>
+                  </div>
+                   <br/><br/>
+                    <div class ="field">
+                        {{ tagnav_form.selectedKey1.errors }}
+                        <label for="id_selectedKey1">Selected keys:</label>
+                        {{ tagnav_form.selectedKey1 }}
+                        <span class="searching_info"
+                            data-content="Search objects annotated with selected keys.</br>Only the keys of the selected group & user are listed.</br>Multiple keys are combined according to the joining method.">
+                            <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
+                        </span>
+                  </div>
+                  <div class ="field">
+                        {{ tagnav_form.selectedValue1.errors }}
+                        <label for="id_selectedValue1">Values:</label>
+                        {{ tagnav_form.selectedValue1 }}
+                        <span class="searching_info"
+                            data-content="Search objects annotated with selected keys.</br>Only the keys of the selected group & user are listed.</br>Multiple keys are combined according to the joining method.">
+                            <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
+                        </span>
+                  </div><br/><br/>
+                   <script>
+                       $( "#id_selectedKey0" ).chosen().change(function(event, params) {
+                          // Tag selection or deselection made
+                          if ((params.selected || params.deselected) && $('#enableCheckbox').is(':checked')) {
+                            $("#tagSearchForm").submit();
+                          }
+                        });
+                   </script>
+                   <script>
+                       $( "#id_selectedKey1" ).chosen().change(function(event, params) {
+                          // Tag selection or deselection made
+                          if ((params.selected || params.deselected) && $('#enableCheckbox').is(':checked')) {
+                            $("#tagSearchForm").submit();
+                          }
+                        });
+                   </script>
+                    <script>
+                       $("#id_selectedValue0").chosen({placeholder_text:'Choose values'});
+                       $( "#id_selectedValue0" ).chosen().change(function(event, params) {
+                          // Tag selection or deselection made
+                          if ((params.selected || params.deselected) && $('#enableCheckbox').is(':checked')) {
+                            $("#tagSearchForm").submit();
+                          }
+                        });
+                   </script>
+                    <script>
+                       $("#id_selectedValue1").chosen({placeholder_text:'Choose values'});
+                       $( "#id_selectedValue1" ).chosen().change(function(event, params) {
+                          // Tag selection or deselection made
+                          if ((params.selected || params.deselected) && $('#enableCheckbox').is(':checked')) {
+                            $("#tagSearchForm").submit();
+                          }
+                        });
+                   </script>
+               </div>
 
               <h2>Results</h2>
               <ul id="counts_list">

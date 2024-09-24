@@ -1,10 +1,15 @@
-from django.forms import Form, MultipleChoiceField, BooleanField
+from django.forms import Form, MultipleChoiceField, BooleanField, CharField
 from django.forms import ChoiceField, RadioSelect
 
 
 class TagSearchForm(Form):
     selectedTags = MultipleChoiceField()
     excludedTags = MultipleChoiceField()
+    selectedKey0 = ChoiceField()
+    selectedValue0 = MultipleChoiceField()
+    selectedNamespaces = MultipleChoiceField()
+    i = 1
+
     operation = ChoiceField(
         widget=RadioSelect,
         choices=(("AND", "AND"), ("OR", "OR")),
@@ -18,10 +23,23 @@ class TagSearchForm(Form):
     view_plate = BooleanField(initial=True)
     view_screen = BooleanField(initial=True)
 
-    def __init__(self, tags, conn=None, *args, **kwargs):
-        super(TagSearchForm, self).__init__(*args, **kwargs)
+    def set_kvp_field(self, i):
+        selectedKey = ChoiceField()
+        selectedValue = MultipleChoiceField()
+        globals()[f"selectedKey{i}"] = selectedKey
+        globals()[f"selectedValue{i}"] = selectedValue
+        self.fields[f"selectedKey{i}"] = selectedKey
+        self.fields[f"selectedValue{i}"] = selectedValue
 
+    def __init__(self, tags, keys, values, namespaces, conn=None, *args, **kwargs):
+        super(TagSearchForm, self).__init__(*args, **kwargs)
         # Process Tags into choices (lists of tuples)
         self.fields["selectedTags"].choices = tags
         self.fields["excludedTags"].choices = tags
+        self.fields["selectedKey0"].choices = keys
+        self.fields["selectedValue0"].choices = values
+        self.set_kvp_field(self.i)
+        self.fields[f"selectedKey{self.i}"].choices = keys
+        self.fields[f"selectedValue{self.i}"].choices = values
+        self.fields["selectedNamespaces"].choices = namespaces
         self.conn = conn
