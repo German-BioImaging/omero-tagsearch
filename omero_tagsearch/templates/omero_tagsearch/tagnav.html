@@ -47,6 +47,7 @@
     <script src="{% static "tagsearch/3rd-party/chosen.order.jquery.js" %}"></script>
 
     <script type="text/javascript">
+        var ownership_l = {{ ownership_l|safe }};
         $(document).ready(function()
             {
 
@@ -75,6 +76,24 @@
                     }
                 }
 
+                $('#user_filter_on').change(function() {
+                  var filter_user = $("#user_filter_on").is(':checked');
+                  $("#id_selectedTags option, #id_excludedTags option").each(function() {
+                    var optionValue = parseInt(this.value);
+                    var inOwnershipList = $.inArray(optionValue, ownership_l) !== -1;
+                    if (filter_user && !inOwnershipList) {
+                      $(this).hide();
+                    } else if (!$(this).hasClass('hidfromresults')) {
+                      $(this).show();
+                    }
+                  });
+                  var selection_incl = $('#id_selectedTags').getSelectionOrder();
+                  var selection_excl = $('#id_excludedTags').getSelectionOrder();
+                  $('#id_selectedTags, #id_excludedTags').trigger("chosen:updated");
+                  $('#id_selectedTags').setSelectionOrder(selection_incl);
+                  $("#id_excludedTags").setSelectionOrder(selection_excl);
+                });
+
                 // Form Submission
                 $("#tagSearchForm").ajaxForm({
                   beforeSubmit: function() {
@@ -93,19 +112,19 @@
 
                     // Hide any options that are no longer possible and
                     // show any that have become possible
-                    $("#id_selectedTags option").each(function() {
-                      if (($.inArray(parseInt(this.value), data.navdata) == -1) && (data.navdata.length != 0)) {
-                        $(this).hide();
-                      } else {
-                        $(this).css('display', '');
-                      }
-                    });
+                    // optionnaly filter on user's owned tags
 
-                    $("#id_excludedTags option").each(function() {
-                      if (($.inArray(parseInt(this.value), data.navdata) == -1) && (data.navdata.length != 0)) {
+                    $("#id_selectedTags option, #id_excludedTags option").each(function() {
+                      var filter_user = $("#user_filter_on").is(':checked');
+                      var tag_value = parseInt(this.value);
+                      if ((($.inArray(tag_value, data.navdata) == -1)
+                           && (data.navdata.length != 0))
+                          || (filter_user && ($.inArray(tag_value, ownership_l) == -1))) {
                         $(this).hide();
+                        $(this).addClass('hidfromresults');
                       } else {
-                        $(this).css('display', '');
+                        $(this).show();
+                        $(this).removeClass('hidfromresults');
                       }
                     });
 
@@ -114,8 +133,7 @@
                     var selection_incl = $('#id_selectedTags').getSelectionOrder();
                     var selection_excl = $('#id_excludedTags').getSelectionOrder();
                     // Update the chosen selector
-                    $("#id_selectedTags").trigger("chosen:updated");
-                    $("#id_excludedTags").trigger("chosen:updated");
+                    $("#id_selectedTags, #id_excludedTags").trigger("chosen:updated");
                     // Restore the ordering
                     $('#id_selectedTags').setSelectionOrder(selection_incl);
                     $("#id_excludedTags").setSelectionOrder(selection_excl);
@@ -201,9 +219,7 @@
                     } else {
                       $("#selectall_btn").text("Select all");
                     }
-
                 });
-
             });
     </script>
 
@@ -227,10 +243,13 @@
           {{ tagnav_form.non_field_errors }}
 
           {% if user_name %}
-            <div id="id_userName" class="tagnav-user">
-              <div class="tagnav-icon">&nbsp;</div>
-              &nbsp;<span>{{ user_name }}</span>
-            </div>
+          <div id="id_userName" class="tagnav-user">
+            <span>
+              <input type="checkbox" id="user_filter_on"> Filter tags for {{ user_name }}
+              &nbsp;<span class="tagnav-icon"></span>
+            </span>
+
+          </div>
           {% endif %}
 
           <div class="fieldWrapper">
@@ -240,7 +259,7 @@
                     <label for="id_selectedTags">Selected Tags:</label>
                     {{ tagnav_form.selectedTags }}&nbsp;
                     <span class="searching_info"
-                    data-content="Search objects annotated with selected tags.</br>Only the tags of the selected group & user are listed.</br>Multiple tags are combined according to the joining method.">
+                    data-content="Search objects annotated with selected tags.</br>Multiple tags are combined according to the joining method.">
                       <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
                   </div><br/>
@@ -249,7 +268,7 @@
                     <label for="id_excludedTags">Excluded Tags:</label>
                     {{ tagnav_form.excludedTags }}&nbsp;
                     <span class="searching_info"
-                    data-content="Remove from the results the objects annotated with excluded tags.</br>Only the tags of the selected group & user are listed.">
+                    data-content="Remove from the results the objects annotated with excluded tags.">
                       <img class="search_tips__tag" src="{% static 'webgateway/img/help16.png' %}" />
                     </span>
                   </div><br/><br/>
