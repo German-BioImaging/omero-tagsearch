@@ -1,6 +1,9 @@
 ---
 name: PyPI
-on: push
+on: 
+  push:
+  schedule:
+    - cron: '0 0 * * *'  # Runs every day at midnight
 
 jobs:
   build-n-publish:
