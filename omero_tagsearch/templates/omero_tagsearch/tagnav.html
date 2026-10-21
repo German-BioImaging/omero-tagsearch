@@ -51,7 +51,7 @@
         $(document).ready(function()
             {
 
-                var objTypes = ['project', 'dataset', 'image', 'screen', 'plate', 'acquisition', 'well']
+                var objTypes = ['project', 'dataset', 'image', 'screen', 'plate', 'acquisition', 'well', 'roi'];
                 $("#id_selectedTags").chosen({placeholder_text:'Choose tags'});
                 $("#id_excludedTags").chosen({placeholder_text:'Choose tags to exclude'});
 
@@ -291,6 +291,7 @@
                   <li class="tagnav-acquisition">{{ tagnav_form.view_acquisition }}<div class="tagnav-icon">&nbsp;</div>Run:&nbsp;<span>0</span></li>
                   <li class="tagnav-well">{{ tagnav_form.view_well }}<div class="tagnav-icon">&nbsp;</div>Well:&nbsp;<span>0</span></li>
                   <li class="tagnav-image">{{ tagnav_form.view_image }}<div class="tagnav-icon">&nbsp;</div>Image:&nbsp;<span>0</span></li>
+                  <li class="tagnav-roi">{{ tagnav_form.view_roi }}<div class="tagnav-icon">&nbsp;</div>ROI:&nbsp;<span>0</span></li>
                   <li><button id="selectall_btn" type="button">Deselect all</button>&nbsp
                      <span class="searching_info" data-content="Deselect object types to filter them out of the result view. This has no effect on the query sent to the server.">
                        <img class="search_tips__join" src="{% static 'webgateway/img/help16.png' %}" />
