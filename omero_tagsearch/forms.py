@@ -14,6 +14,7 @@ class TagSearchForm(Form):
     view_dataset = BooleanField(initial=True)
     view_project = BooleanField(initial=True)
     view_well = BooleanField(initial=True)
+    view_roi = BooleanField(initial=True)
     view_acquisition = BooleanField(initial=True)
     view_plate = BooleanField(initial=True)
     view_screen = BooleanField(initial=True)

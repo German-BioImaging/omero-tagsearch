@@ -83,13 +83,13 @@
   background: url('../image/well16.png') no-repeat;
 }
 
-.tagnav-image .tagnav-icon {
-  background: url('../image/image16.png') no-repeat;
+.tagnav-roi .tagnav-icon {
+  background: url('../image/polygon16.png') no-repeat;
 }
 
 .tagnav-project, .tagnav-dataset, .tagnav-screen,
 .tagnav-plate, .tagnav-acquisition, .tagnav-well,
-.tagnav-image, .tagnav-user {
+.tagnav-image, .tagnav-roi, .tagnav-user {
     color: hsl(210,10%,50%);
     font-size: 1.2em;
     text-shadow: 0 1px 0 white;
