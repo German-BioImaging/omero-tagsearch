@@ -7,7 +7,7 @@
 
 OMERO.tagsearch
 ===============
-OMERO.tagsearch is a plugin for `OMERO.web <https://github.com/ome/omero-web>`_ that enables searching of data using tags, with the search continuously refined as available search terms are entered and further term suggestions based on the entered terms are offered. 
+OMERO.tagsearch is a plugin for `OMERO.web <https://github.com/ome/omero-web>`_ that enables searching of data using tags, with the search continuously refined as available search terms are entered and further term suggestions based on the entered terms are offered.
 This can be used in a way that is similar to navigating a file system hierarchy.
 
 This was formerly part of `OMERO.webtagging <https://github.com/German-BioImaging/webtagging>`_, the umbrella name for tools developed to enhance use of text annotations (tags) in OMERO.
@@ -16,12 +16,10 @@ Requirements
 ============
 
 As Python 2 has now reached end-of-life, OMERO 5.6 now
-requires Python 3. With release 3.1.0 of tagsearch, the following are now required. To use tagsearch on older OMERO systems (running Python 2),
+requires Python 3. To use tagsearch on older OMERO systems (running Python 2),
 please use versions older than 3.1.0.
 
-* Python 3.8 or later
-* omero-web 5.6 or later
-* django 4.2 or later
+Version requirements on python and OMERO.web are loose on purpose to avoid dependency issues, but using the latest OMERO.web version is highly recommended.
 
 User Documentation
 ==================
@@ -57,7 +55,7 @@ You can perform the upgrade as follow:
 
   # stop omero web
   # Install the new package and uninstall the old one
-  pip uninstall omero-webtagging-tagsearch  
+  pip uninstall omero-webtagging-tagsearch
   pip install omero-tagsearch
 
   # Then open the OMERO.web configuration editor
@@ -66,7 +64,7 @@ You can perform the upgrade as follow:
   # In 'omero.web.apps': 'omero_webtagging_tagsearch' -> 'omero_tagsearch'
   # start omero web
 
-Note that installing the latest `omero-webtagging-autotag` is not functional but has a dependency on `omero-autotag`. 
+Note that installing the latest `omero-webtagging-autotag` is not functional but has a dependency on `omero-autotag`.
 Thus, if you wish to use the old version `omero-webtagging-tagsearch`, make sure to specify the latest working version:
 
 ::
@@ -87,7 +85,7 @@ Available on the `OMERO website <http://help.openmicroscopy.org/web-tagging.html
 Development
 ===========
 
-Pure javascript so does not require a node build step.
+No Node build step is required.
 
 To install using pip in development mode (in appropriate virtualenv)
 
