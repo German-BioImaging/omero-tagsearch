@@ -34,8 +34,10 @@ def index(request, conn=None, **kwargs):
     # path=project=51|dataset=502|image=607 (select the image)
     path = request.GET.get("path", "")
     i = path.split("|")[-1]
-    if i.split("=")[0] in ("project", "dataset", "image", "screen",
-                           "plate", "tag", "acquisition", "run", "well", "roi"):
+    if i.split("=")[0] in (
+        "project", "dataset", "image", "screen", "plate",
+        "tag", "acquisition", "run", "well", "roi",
+    ):
         init["initially_select"].append(str(i).replace("=", "-"))
 
     # Now we support show=image-607|image-123  (multi-objects selected)
