@@ -37,13 +37,14 @@
             //});
 
             // single click handler on image (container). Selection then update toolbar & metadata pane
-            $("table#dataTable tbody tr").click(function(event) {
+            // ROI rows are skipped: the right panel does not support ROIs
+            $("table#dataTable tbody tr:not(.roi_row)").click(function(event) {
                 OME.handleTableClickSelection(event);
             });
 
             // plugin to handle drag-select of images
             $("table#dataTable tbody").selectable({
-                filter: 'tr',
+                filter: 'tr:not(.roi_row)',
                 distance: 2,
                 stop: function(){
                     var selected = $('tr.ui-selected', this);
@@ -211,6 +212,20 @@
                     <td class="group">{{ c.getDetails.group.name.val }}</td>
                     <td><a href="{% url 'webindex' %}?show=image-{{ c.id }}" title="{% trans 'Show in hierarchy view' %}">
                         {% trans "Browse" %}
+                    </a></td>
+                </tr>
+            {% endfor %}
+            {% for c in manager.containers.roi %}
+                <tr id="roi-{{ c.id }}" class="{{ c.getPermsCss }} roi_row">
+                    <td class="image">
+                        <img id="{{ c.id }}" src="{% static "webgateway/img/polygon16.png" %}" alt="roi" title="{{ c.name }}"/>
+                    </td>
+                    <td class="desc"><a>{{ c.name|truncatebefor:"65" }}</a></td>
+                    <td class="date">{{ c.creationEventDate }}</td>
+                    <td class="owner">{{ c.getOwnerFullName }}</td>
+                    <td class="group">{{ c.getDetails.group.name.val }}</td>
+                    <td><a href="{{ iviewer_url }}?roi={{ c.id }}" target="_blank" title="{% trans 'Show in iviewer' %}">
+                        {% trans "View" %}
                     </a></td>
                 </tr>
             {% endfor %}

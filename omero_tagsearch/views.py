@@ -34,8 +34,10 @@ def index(request, conn=None, **kwargs):
     # path=project=51|dataset=502|image=607 (select the image)
     path = request.GET.get("path", "")
     i = path.split("|")[-1]
-    if i.split("=")[0] in ("project", "dataset", "image", "screen",
-                           "plate", "tag", "acquisition", "run", "well"):
+    if i.split("=")[0] in (
+        "project", "dataset", "image", "screen", "plate",
+        "tag", "acquisition", "run", "well", "roi",
+    ):
         init["initially_select"].append(str(i).replace("=", "-"))
 
     # Now we support show=image-607|image-123  (multi-objects selected)
@@ -51,6 +53,7 @@ def index(request, conn=None, **kwargs):
             "acquisition",
             "run",
             "well",
+            "roi",
         ):
             # alternatives for 'acquisition'
             i = i.replace("run", "acquisition")
@@ -242,6 +245,7 @@ def index(request, conn=None, **kwargs):
     tags.update(get_tags("PlateAcquisition", tagset_d))
     tags.update(get_tags("Screen", tagset_d))
     tags.update(get_tags("Well", tagset_d))
+    tags.update(get_tags("Roi", tagset_d))
 
     # Convert back to an ordered list and sort
     tags = list(tags)
@@ -357,6 +361,10 @@ def tag_image_search(request, conn=None, **kwargs):
                                      excluded_tags)
         count_d["well"] = len(well_ids)
 
+        roi_ids = get_annotated_obj("Roi", selected_tags,
+                                    excluded_tags)
+        count_d["roi"] = len(roi_ids)
+
         acquisition_ids = get_annotated_obj("PlateAcquisition",
                                             selected_tags, excluded_tags)
         count_d["acquisition"] = len(acquisition_ids)
@@ -388,6 +396,10 @@ def tag_image_search(request, conn=None, **kwargs):
                 wells.append(w)
             manager["containers"]["well"] = wells
 
+        if roi_ids:
+            rois = conn.getObjects("Roi", ids=roi_ids)
+            manager["containers"]["roi"] = list(rois)
+
         if acquisition_ids:
             acquisitions = conn.getObjects(
                 "PlateAcquisition", ids=acquisition_ids
@@ -399,6 +411,13 @@ def tag_image_search(request, conn=None, **kwargs):
             preview = True
 
         context["manager"] = manager
+
+        # Resolve the iviewer base URL dynamically (same host as OMERO.web)
+        try:
+            iviewer_url = reverse("omero_iviewer_index")
+        except Exception:
+            iviewer_url = "/iviewer/"
+        context["iviewer_url"] = iviewer_url
 
         html_response = render_to_string(
             "omero_tagsearch/search_details.html", context
@@ -463,6 +482,9 @@ def tag_image_search(request, conn=None, **kwargs):
             if screen_ids:
                 remaining.update(get_objects_annotations("Screen",
                                                          screen_ids))
+            if roi_ids:
+                remaining.update(get_objects_annotations("Roi",
+                                                         roi_ids))
 
         end = time.time()
         logger.info(
