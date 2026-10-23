@@ -83,6 +83,10 @@
   background: url('../image/well16.png') no-repeat;
 }
 
+.tagnav-image .tagnav-icon {
+  background: url('../image/image16.png') no-repeat;
+}
+
 .tagnav-roi .tagnav-icon {
   background: url('../image/polygon16.png') no-repeat;
 }
